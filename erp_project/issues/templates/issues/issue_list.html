@@ -95,8 +95,14 @@
     </form>
 </div>
 
-<div class="erp-card">
-    <div class="table-responsive">
+<div class="erp-card" style="position:relative; padding:0; overflow:hidden;">
+    <button class="table-scroll-btn" id="scrollLeft">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+    <button class="table-scroll-btn" id="scrollRight">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+    <div class="table-scroll-hidden" id="tableScroll" style="padding: 5px;">
         <table class="table erp-table mb-0">
             <thead>
                 <tr>
@@ -172,4 +178,28 @@
         </table>
     </div>
 </div>
+
+<script>
+    const tableScroll  = document.getElementById('tableScroll');
+    const scrollLeft   = document.getElementById('scrollLeft');
+    const scrollRight  = document.getElementById('scrollRight');
+    const scrollAmount = 300;
+
+    scrollLeft.addEventListener('click', function () {
+        tableScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+
+    scrollRight.addEventListener('click', function () {
+        tableScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+
+    function updateButtons() {
+        scrollLeft.style.opacity  = tableScroll.scrollLeft > 0 ? '1' : '0.3';
+        scrollRight.style.opacity = tableScroll.scrollLeft < (tableScroll.scrollWidth - tableScroll.clientWidth) ? '1' : '0.3';
+    }
+
+    tableScroll.addEventListener('scroll', updateButtons);
+    updateButtons();
+</script>
+
 {% endblock %}

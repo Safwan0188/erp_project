@@ -641,3 +641,44 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* TABLE SCROLL BUTTONS */
+.table-scroll-hidden {
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.table-scroll-hidden::-webkit-scrollbar {
+    display: none;
+}
+
+.table-scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0, 82, 204, 0.35);
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.table-scroll-btn:hover {
+    background: rgba(0, 82, 204, 0.8);
+}
+
+#scrollLeft {
+    left: 6px;
+}
+
+#scrollRight {
+    right: 6px;
+}
