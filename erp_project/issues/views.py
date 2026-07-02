@@ -115,11 +115,11 @@ def dashboard(request):
     on_track  = issues.exclude(status__name='Closed').filter(approx_delivery__gte=today).count()
 
     # 11.4 Developer Performance
-    developers = issues.values('assigned_to__name').annotate(
-        total_assigned = Count('issue_id'),
-        completed      = Count('issue_id', filter=Q(status__name='Closed')),
-        in_progress    = Count('issue_id', filter=Q(status__name='In Progress')),
-        delayed        = Count('issue_id', filter=Q(approx_delivery__lt=today) & ~Q(status__name='Closed')),
+    developers = issues.exclude(assigned_to__isnull=True).values('assigned_to__name').annotate(
+    total_assigned = Count('issue_id'),
+    completed      = Count('issue_id', filter=Q(status__name='Closed')),
+    in_progress    = Count('issue_id', filter=Q(status__name='In Progress')),
+    delayed        = Count('issue_id', filter=Q(approx_delivery__lt=today) & ~Q(status__name='Closed')),
     ).order_by('assigned_to__name')
 
     for dev in developers:
