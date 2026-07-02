@@ -1,0 +1,175 @@
+{% extends "issues/base.html" %}
+{% load issue_extras %}
+{% block nav_list %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4><i class="bi bi-card-list me-2"></i>Issue Tracker</h4>
+    <a href="{% url 'issue_create' %}" class="btn">
+        <i class="bi bi-plus-lg"></i> Create Issue
+    </a>
+</div>
+
+<!-- SEARCH & FILTER BAR -->
+<div class="erp-card mb-3">
+    <form method="GET">
+        <div class="row g-2 align-items-end">
+
+            <!-- Search -->
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control"
+                        placeholder="Issue ID, Project, Developer, Reporter...">
+                </div>
+            </div>
+
+            <!-- Development Status -->
+            <div class="col-md-2">
+                <label class="form-label">Development Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for s in all_statuses %}
+                    <option value="{{ s.name }}" {% if status == s.name %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-2">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for c in all_categories %}
+                    <option value="{{ c.name }}" {% if category == c.name %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Type -->
+            <div class="col-md-2">
+                <label class="form-label">Type</label>
+                <select name="type" class="form-select">
+                    <option value="">All Types</option>
+                    {% for t in all_types %}
+                    <option value="{{ t.name }}" {% if type == t.name %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- QA Status -->
+            <div class="col-md-2">
+                <label class="form-label">QA Status</label>
+                <select name="qa_status" class="form-select">
+                    <option value="">All QA Statuses</option>
+                    {% for q in all_qa_statuses %}
+                    <option value="{{ q.name }}" {% if qa_status == q.name %}selected{% endif %}>{{ q.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Delivery Date From -->
+            <div class="col-md-2">
+                <label class="form-label">Delivery Date From</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+            </div>
+
+            <!-- Delivery Date To -->
+            <div class="col-md-2">
+                <label class="form-label">Delivery Date To</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+            </div>
+
+            <!-- Buttons -->
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn w-100">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a href="{% url 'issue_list' %}" class="btn-outline w-100 justify-content-center">
+                    <i class="bi bi-x"></i> Clear
+                </a>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<div class="erp-card">
+    <div class="table-responsive">
+        <table class="table erp-table mb-0">
+            <thead>
+                <tr>
+                    <th>Issue ID</th>
+                    <th>Project</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Summary</th>
+                    <th>Description</th>
+                    <th>Reported By</th>
+                    <th>Reported Date</th>
+                    <th>Assigned To</th>
+                    <th>Allocated Time</th>
+                    <th>Approx. Delivery</th>
+                    <th>Development Status</th>
+                    <th>Completion Date</th>
+                    <th>QA By</th>
+                    <th>QA Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for issue in issues %}
+                <tr style="cursor:pointer;" onclick="window.location='{% url 'issue_detail' issue.issue_id %}'">
+                    <td><span class="issue-id">#{{ issue.issue_id }}</span></td>
+                    <td>{{ issue.project }}</td>
+                    <td>
+                        <span class="badge-status category-{{ issue.category.name|slugify_badge }}">
+                            {{ issue.category.name|default:"-" }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge-status type-{{ issue.type.name|slugify_badge }}">
+                            {{ issue.type.name|default:"-" }}
+                        </span>
+                    </td>
+                    <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        {{ issue.summary }}
+                    </td>
+                    <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        {{ issue.description|default:"-" }}
+                    </td>
+                    <td>{{ issue.reported_by }}</td>
+                    <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
+                    <td>{{ issue.assigned_to.name|default:"-" }}</td>
+                    <td>{{ issue.allocated_time }}</td>
+                    <td style="white-space:nowrap;">{{ issue.approx_delivery }}</td>
+                    <td>
+                        <span class="badge-status status-{{ issue.status.name|slugify_badge }}">
+                            {{ issue.status.name|default:"-" }}
+                        </span>
+                    </td>
+                    <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
+                    <td>{{ issue.qa_by|default:"-" }}</td>
+                    <td>
+                        <span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">
+                            {{ issue.qa_status.name|default:"-" }}
+                        </span>
+                    </td>
+                    <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        {{ issue.notes|default:"-" }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="16" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                        No issues yet. <a href="{% url 'issue_create' %}">Create your first one!</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

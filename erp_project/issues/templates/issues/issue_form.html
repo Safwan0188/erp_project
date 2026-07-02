@@ -1,0 +1,167 @@
+{% extends "issues/base.html" %}
+{% block nav_create %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4>
+        <i class="bi bi-{% if edit %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+        {% if edit %}Edit Issue #{{ form.instance.issue_id }}{% else %}Create New Issue{% endif %}
+    </h4>
+    <a href="{% url 'issue_list' %}" class="btn-outline">
+        <i class="bi bi-arrow-left"></i> Back to Issues
+    </a>
+</div>
+
+<div class="erp-card">
+    <form method="POST">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger mb-4">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                {% for field in form %}
+                {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="section-divider">Basic Information</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Project</label>
+                {{ form.project }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                {{ form.category }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Type</label>
+                {{ form.type }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Summary</label>
+                {{ form.summary }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+            </div>
+        </div>
+
+        <div class="section-divider">Reporting Details</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Reported By</label>
+                {{ form.reported_by }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Reported Date</label>
+                {{ form.reported_date }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Assigned To</label>
+                {{ form.assigned_to }}
+            </div>
+        </div>
+
+        <div class="section-divider">Timeline & Status</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Allocated Time</label>
+                {{ form.allocated_time }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Approx. Delivery Date</label>
+                {{ form.approx_delivery }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Development Status</label>
+                {{ form.status }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Completion Date</label>
+                {{ form.completion_date }}
+            </div>
+        </div>
+
+        <div class="section-divider">QA & Notes</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">QA By</label>
+                {{ form.qa_by }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">QA Status</label>
+                {{ form.qa_status }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Notes</label>
+                {{ form.notes }}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2">
+            <button type="submit" class="btn">
+                <i class="bi bi-check-lg"></i> {% if edit %}Update Issue{% else %}Save Issue{% endif %}
+            </button>
+            <a href="{% url 'issue_list' %}" class="btn-outline">Cancel</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    const categoryAllocatedMap = {
+        'Critical' : '3 - 12 Hours',
+        'High'     : '1 - 5 Days',
+        'Medium'   : '2 - 7 Days',
+        'Regular'  : '3 - 15 Days',
+    };
+
+    const categorySelect = document.getElementById('id_category');
+    const allocatedInput = document.getElementById('id_allocated_time');
+
+    categorySelect.addEventListener('change', function () {
+        const selectedText = this.options[this.selectedIndex].text.trim();
+
+        if (categoryAllocatedMap[selectedText]) {
+            allocatedInput.value = categoryAllocatedMap[selectedText];
+        } else {
+            allocatedInput.value = '';
+        }
+    });
+</script>
+
+<script>
+    const reportedDateInput  = document.getElementById('id_reported_date');
+    const approxDelivery     = document.getElementById('id_approx_delivery');
+    const completionDate     = document.getElementById('id_completion_date');
+
+    function updateMinDates() {
+        const reportedVal = reportedDateInput.value;
+        if (reportedVal) {
+            approxDelivery.min  = reportedVal;
+            completionDate.min  = reportedVal;
+
+            if (approxDelivery.value && approxDelivery.value < reportedVal) {
+                approxDelivery.value = reportedVal;
+            }
+            if (completionDate.value && completionDate.value < reportedVal) {
+                completionDate.value = reportedVal;
+            }
+        }
+    }
+
+    reportedDateInput.addEventListener('change', updateMinDates);
+    updateMinDates();
+</script>
+
+{% endblock %}

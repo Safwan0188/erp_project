@@ -1,0 +1,83 @@
+import datetime
+from django import forms
+from .models import Issue, Category, IssueType, Status, QAStatus, Developer
+
+
+class IssueForm(forms.ModelForm):
+    class Meta:
+        model = Issue
+        fields = '__all__'
+        widgets = {
+            'reported_date'   : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'approx_delivery' : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'completion_date' : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'description'     : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'notes'           : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'project'         : forms.TextInput(attrs={'class': 'form-control'}),
+            'summary'         : forms.TextInput(attrs={'class': 'form-control'}),
+            'reported_by'     : forms.TextInput(attrs={'class': 'form-control'}),
+            'allocated_time'  : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 3 - 5 hrs or 10 - 12 days'}),
+            'qa_by'           : forms.TextInput(attrs={'class': 'form-control'}),
+            'category'        : forms.Select(attrs={'class': 'form-select'}),
+            'type'            : forms.Select(attrs={'class': 'form-select'}),
+            'status'          : forms.Select(attrs={'class': 'form-select'}),
+            'qa_status'       : forms.Select(attrs={'class': 'form-select'}),
+            'assigned_to'     : forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        today = datetime.date.today().isoformat()
+
+        if not self.instance.pk:
+            # Creating — min is today for all date fields
+            self.fields['reported_date'].initial = datetime.date.today()
+            self.fields['reported_date'].widget.attrs['min']   = today
+            self.fields['approx_delivery'].widget.attrs['min'] = today
+            self.fields['completion_date'].widget.attrs['min'] = today
+        else:
+            # Editing — min is the original reported date for all date fields
+            if self.instance.reported_date:
+                reported = self.instance.reported_date.isoformat()
+                self.fields['reported_date'].widget.attrs['min']   = reported
+                self.fields['approx_delivery'].widget.attrs['min'] = reported
+                self.fields['completion_date'].widget.attrs['min'] = reported
+            else:
+                self.fields['reported_date'].widget.attrs['min']   = today
+                self.fields['approx_delivery'].widget.attrs['min'] = today
+                self.fields['completion_date'].widget.attrs['min'] = today
+
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name']
+        widgets = {'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Critical'})}
+
+
+class IssueTypeForm(forms.ModelForm):
+    class Meta:
+        model = IssueType
+        fields = ['name']
+        widgets = {'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Bug'})}
+
+
+class StatusForm(forms.ModelForm):
+    class Meta:
+        model = Status
+        fields = ['name']
+        widgets = {'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. In Progress'})}
+
+
+class QAStatusForm(forms.ModelForm):
+    class Meta:
+        model = QAStatus
+        fields = ['name']
+        widgets = {'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Passed'})}
+
+
+class DeveloperForm(forms.ModelForm):
+    class Meta:
+        model = Developer
+        fields = ['name']
+        widgets = {'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. John Doe'})}

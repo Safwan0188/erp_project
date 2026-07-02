@@ -1,0 +1,144 @@
+{% extends "issues/base.html" %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4><i class="bi bi-speedometer2 me-2"></i>Dashboard</h4>
+</div>
+
+<div class="dash-panels">
+
+    <!-- ISSUE SUMMARY -->
+    <div class="dash-panel">
+        <div class="dash-panel-title">Issue Summary</div>
+        <div class="dash-grid dash-grid-5">
+            <div class="dash-stat">
+                <div class="dash-stat-value">{{ total }}</div>
+                <div class="dash-stat-label">Total Issues</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#bf2600;">{{ critical }}</div>
+                <div class="dash-stat-label">Critical</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#974f0c;">{{ high }}</div>
+                <div class="dash-stat-label">High</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#0052cc;">{{ medium }}</div>
+                <div class="dash-stat-label">Medium</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value">{{ regular }}</div>
+                <div class="dash-stat-label">Regular</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEVELOPMENT STATUS -->
+    <div class="dash-panel">
+        <div class="dash-panel-title">Development Status Summary</div>
+        <div class="dash-grid dash-grid-7">
+            <div class="dash-stat">
+                <div class="dash-stat-value">{{ open_count }}</div>
+                <div class="dash-stat-label">Open</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#974f0c;">{{ assigned }}</div>
+                <div class="dash-stat-label">Assigned</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#0052cc;">{{ in_progress }}</div>
+                <div class="dash-stat-label">In Progress</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#006644;">{{ resolved }}</div>
+                <div class="dash-stat-label">Resolved</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#403294;">{{ qa_verif }}</div>
+                <div class="dash-stat-label">QA Verification</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value">{{ closed }}</div>
+                <div class="dash-stat-label">Closed</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#bf2600;">{{ reopened }}</div>
+                <div class="dash-stat-label">Reopened</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELIVERY SUMMARY -->
+    <div class="dash-panel">
+        <div class="dash-panel-title">Delivery Summary</div>
+        <div class="dash-grid dash-grid-4">
+            <div class="dash-stat">
+                <div class="dash-stat-value">{{ total_tasks }}</div>
+                <div class="dash-stat-label">Total Tasks</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#006644;">{{ delivered }}</div>
+                <div class="dash-stat-label">Delivered</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#0052cc;">{{ on_track }}</div>
+                <div class="dash-stat-label">On Track</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#bf2600;">{{ delayed }}</div>
+                <div class="dash-stat-label">Delayed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEVELOPER PERFORMANCE -->
+    <div class="dash-panel">
+        <div class="dash-panel-title">Developer Performance</div>
+        <div class="dev-grid">
+            {% for dev in developers %}
+            <div class="dev-card">
+                <div class="dev-card-header">
+                    <div class="dev-avatar">{{ dev.assigned_to__name|slice:":2"|upper }}</div>
+                    <div>
+                        <div class="dev-name">{{ dev.assigned_to__name|default:"Unassigned" }}</div>
+                        <div class="dev-role">Developer</div>
+                    </div>
+                </div>
+                <div class="dev-stat-grid">
+                    <div class="dev-stat-box">
+                        <div class="dev-stat-label">Assigned</div>
+                        <div class="dev-stat-value">{{ dev.total_assigned }}</div>
+                    </div>
+                    <div class="dev-stat-box">
+                        <div class="dev-stat-label">Completed</div>
+                        <div class="dev-stat-value" style="color:#006644;">{{ dev.completed }}</div>
+                    </div>
+                    <div class="dev-stat-box">
+                        <div class="dev-stat-label">In Progress</div>
+                        <div class="dev-stat-value" style="color:#0052cc;">{{ dev.in_progress }}</div>
+                    </div>
+                    <div class="dev-stat-box">
+                        <div class="dev-stat-label">Delayed</div>
+                        <div class="dev-stat-value" style="color:#bf2600;">{{ dev.delayed }}</div>
+                    </div>
+                </div>
+                <div class="dev-resolution">
+                    <div class="dev-resolution-header">
+                        <span>Resolution rate</span>
+                        <span style="color:#0052cc; font-weight:500;">{{ dev.resolution_rate }}%</span>
+                    </div>
+                    <div class="dev-progress-track">
+                        <div class="dev-progress-fill" style="width:{{ dev.resolution_rate }}%;"></div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:#5e6c84;">No developer data yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

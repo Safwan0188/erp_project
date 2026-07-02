@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev ERP</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'issues/css/style.css' %}">
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <a class="sidebar-brand" href="/">
+            <span>ERP</span> Dev Tracker
+        </a>
+        <div class="sidebar-nav">
+            <div class="sidebar-label">Main Menu</div>
+            <a href="{% url 'dashboard' %}" class="{% block nav_dashboard %}{% endblock %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="{% url 'notification_list' %}" class="{% block nav_notifications %}{% endblock %}">
+                <i class="bi bi-bell"></i> Notifications
+                {% if unread_count > 0 %}
+                <span class="notif-badge">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'issue_list' %}" class="{% block nav_list %}{% endblock %}">
+                <i class="bi bi-card-list"></i> All Issues
+            </a>
+            <a href="{% url 'issue_create' %}" class="{% block nav_create %}{% endblock %}">
+                <i class="bi bi-plus-circle"></i> Create Issue
+            </a>
+            <div class="sidebar-label">Configuration</div>
+            <a href="{% url 'settings_page' %}" class="{% block nav_settings %}{% endblock %}">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,111 @@
+{% extends "issues/base.html" %}
+{% load issue_extras %}
+
+{% block content %}
+<div class="topbar">
+    <h4><i class="bi bi-card-text me-2"></i>Issue #{{ issue.issue_id }}</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'issue_edit' issue.issue_id %}" class="btn">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <a href="{% url 'issue_delete' issue.issue_id %}" class="btn" style="background:#bf2600;">
+            <i class="bi bi-trash"></i> Delete
+        </a>
+        <a href="{% url 'issue_list' %}" class="btn-outline">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="erp-card">
+
+    <div class="section-divider">Basic Information</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="detail-label">Issue ID</div>
+            <div class="detail-value issue-id">#{{ issue.issue_id }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Project</div>
+            <div class="detail-value">{{ issue.project }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Category</div>
+            <div class="detail-value">
+                <span class="badge-status category-{{ issue.category.name|slugify_badge }}">{{ issue.category.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Type</div>
+            <div class="detail-value">
+                <span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="detail-label">Summary</div>
+            <div class="detail-value">{{ issue.summary }}</div>
+        </div>
+        <div class="col-12">
+            <div class="detail-label">Description</div>
+            <div class="detail-value">{{ issue.description|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider">Reporting Details</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="detail-label">Reported By</div>
+            <div class="detail-value">{{ issue.reported_by }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Reported Date</div>
+            <div class="detail-value">{{ issue.reported_date }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Assigned To</div>
+            <div class="detail-value">{{ issue.assigned_to.name|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider">Timeline & Status</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="detail-label">Allocated Time</div>
+            <div class="detail-value">{{ issue.allocated_time|default:"-" }}</div>
+        </div>
+        <div class="col-md-3">
+            <div class="detail-label">Approx. Delivery Date</div>
+            <div class="detail-value">{{ issue.approx_delivery }}</div>
+        </div>
+        <div class="col-md-3">
+            <div class="detail-label">Development Status</div>
+            <div class="detail-value">
+                <span class="badge-status status-{{ issue.status.name|slugify_badge }}">{{ issue.status.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="detail-label">Completion Date</div>
+            <div class="detail-value">{{ issue.completion_date|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider">QA & Notes</div>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="detail-label">QA By</div>
+            <div class="detail-value">{{ issue.qa_by|default:"-" }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">QA Status</div>
+            <div class="detail-value">
+                <span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="detail-label">Notes</div>
+            <div class="detail-value">{{ issue.notes|default:"-" }}</div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

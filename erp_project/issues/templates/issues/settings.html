@@ -1,0 +1,197 @@
+{% extends "issues/base.html" %}
+{% block nav_settings %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4><i class="bi bi-gear me-2"></i>Settings</h4>
+</div>
+
+<div class="row g-4">
+
+    <!-- CATEGORY -->
+    <div class="col-md-6">
+        <div class="erp-card">
+            <div class="section-divider">Categories</div>
+            <form method="POST" class="d-flex gap-2 mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="category">
+                {{ category_form.name }}
+                <button type="submit" class="btn" style="white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </form>
+            <ul class="list-group">
+                {% for item in categories %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ item.name }}</span>
+                    {% if not item.is_default %}
+                    <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="delete">
+                        <input type="hidden" name="model_name" value="category">
+                        <input type="hidden" name="obj_id" value="{{ item.id }}">
+                        <button type="submit" class="btn" style="padding:3px 10px; font-size:12px; background:#bf2600;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No categories yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- TYPE -->
+    <div class="col-md-6">
+        <div class="erp-card">
+            <div class="section-divider">Issue Types</div>
+            <form method="POST" class="d-flex gap-2 mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="issue_type">
+                {{ type_form.name }}
+                <button type="submit" class="btn" style="white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </form>
+            <ul class="list-group">
+                {% for item in issue_types %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ item.name }}</span>
+                    {% if not item.is_default %}
+                    <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="delete">
+                        <input type="hidden" name="model_name" value="issue_type">
+                        <input type="hidden" name="obj_id" value="{{ item.id }}">
+                        <button type="submit" class="btn" style="padding:3px 10px; font-size:12px; background:#bf2600;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No types yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="col-md-6">
+        <div class="erp-card">
+            <div class="section-divider">Development Statuses</div>
+            <form method="POST" class="d-flex gap-2 mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="status">
+                {{ status_form.name }}
+                <button type="submit" class="btn" style="white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </form>
+            <ul class="list-group">
+                {% for item in statuses %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ item.name }}</span>
+                    {% if not item.is_default %}
+                    <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="delete">
+                        <input type="hidden" name="model_name" value="status">
+                        <input type="hidden" name="obj_id" value="{{ item.id }}">
+                        <button type="submit" class="btn" style="padding:3px 10px; font-size:12px; background:#bf2600;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No statuses yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- QA STATUS -->
+    <div class="col-md-6">
+        <div class="erp-card">
+            <div class="section-divider">QA Statuses</div>
+            <form method="POST" class="d-flex gap-2 mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="qa_status">
+                {{ qa_status_form.name }}
+                <button type="submit" class="btn" style="white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </form>
+            <ul class="list-group">
+                {% for item in qa_statuses %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ item.name }}</span>
+                    {% if not item.is_default %}
+                    <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="delete">
+                        <input type="hidden" name="model_name" value="qa_status">
+                        <input type="hidden" name="obj_id" value="{{ item.id }}">
+                        <button type="submit" class="btn" style="padding:3px 10px; font-size:12px; background:#bf2600;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No QA statuses yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- DEVELOPERS -->
+    <div class="col-md-6">
+        <div class="erp-card">
+            <div class="section-divider">Developers</div>
+            <form method="POST" class="d-flex gap-2 mb-3">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="developer">
+                {{ developer_form.name }}
+                <button type="submit" class="btn" style="white-space:nowrap;">
+                    <i class="bi bi-plus-lg"></i> Add
+                </button>
+            </form>
+            <ul class="list-group">
+                {% for item in developers %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ item.name }}</span>
+                    {% if not item.is_default %}
+                    <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="delete">
+                        <input type="hidden" name="model_name" value="developer">
+                        <input type="hidden" name="obj_id" value="{{ item.id }}">
+                        <button type="submit" class="btn" style="padding:3px 10px; font-size:12px; background:#bf2600;">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No developers yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
