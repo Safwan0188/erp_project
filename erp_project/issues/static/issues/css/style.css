@@ -642,43 +642,74 @@ body {
     }
 }
 
-/* TABLE SCROLL BUTTONS */
+/* TABLE SCROLL */
 .table-scroll-hidden {
-    overflow-x: auto;
-    scrollbar-width: none;
+    overflow-x: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: #0052cc #dfe1e6;
 }
 
 .table-scroll-hidden::-webkit-scrollbar {
-    display: none;
+    height: 6px;
 }
 
-.table-scroll-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: rgba(0, 82, 204, 0.35);
-    color: #fff;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    cursor: pointer;
-    transition: background 0.2s;
+.table-scroll-hidden::-webkit-scrollbar-track {
+    background: #dfe1e6;
+    border-radius: 4px;
 }
 
-.table-scroll-btn:hover {
-    background: rgba(0, 82, 204, 0.8);
+.table-scroll-hidden::-webkit-scrollbar-thumb {
+    background: #0052cc;
+    border-radius: 4px;
 }
 
-#scrollLeft {
-    left: 6px;
+.table-scroll-hidden::-webkit-scrollbar-thumb:hover {
+    background: #0065ff;
 }
 
-#scrollRight {
-    right: 6px;
+/* FROZEN COLUMNS */
+.erp-table th:nth-child(1),
+.erp-table td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #fff;
+    border-right: 1px solid #dfe1e6;
+}
+
+.erp-table th:nth-child(2),
+.erp-table td:nth-child(2) {
+    position: sticky;
+    left: 80px;
+    z-index: 2;
+    background: #fff;
+    border-right: 1px solid #dfe1e6;
+}
+
+.erp-table thead th:nth-child(1),
+.erp-table thead th:nth-child(2) {
+    background: #f4f5f7;
+    z-index: 3;
+}
+
+/* ALL COLUMNS DIVIDER */
+.erp-table th,
+.erp-table td {
+    border-right: 1px solid #dfe1e6;
+}
+
+.erp-table th:last-child,
+.erp-table td:last-child {
+    border-right: none;
+}
+
+/* CONSISTENT ROW HOVER */
+.erp-table tbody tr:hover td {
+    background: #f4f5f7;
+}
+
+.erp-table tbody tr:hover td:nth-child(1),
+.erp-table tbody tr:hover td:nth-child(2) {
+    background: #f4f5f7;
+}
 }
