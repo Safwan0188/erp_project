@@ -173,4 +173,73 @@
     </div>
 </div>
 
+<!-- STICKY SCROLLBAR -->
+<div class="sticky-scrollbar-wrapper" id="stickyScrollbarWrapper">
+    <div class="sticky-scrollbar-inner" id="stickyScrollbarInner"></div>
+</div>
+
+<script>
+    const tableScroll   = document.querySelector('.table-scroll-hidden');
+    const stickyWrapper = document.getElementById('stickyScrollbarWrapper');
+    const stickyInner   = document.getElementById('stickyScrollbarInner');
+
+    function updateStickyScrollbar() {
+        stickyInner.style.width = tableScroll.scrollWidth + 'px';
+    }
+
+    // Sync sticky scrollbar scroll to table
+    stickyWrapper.addEventListener('scroll', function () {
+        tableScroll.scrollLeft = stickyWrapper.scrollLeft;
+    });
+
+    // Sync table scroll to sticky scrollbar
+    tableScroll.addEventListener('scroll', function () {
+        stickyWrapper.scrollLeft = tableScroll.scrollLeft;
+    });
+
+    function handleVisibility() {
+        const tableRect    = tableScroll.getBoundingClientRect();
+        const tableTop     = tableRect.top;
+        const tableBottom  = tableRect.bottom;
+        const winHeight    = window.innerHeight;
+        const tableLeft    = tableRect.left;
+        const tableWidth   = tableRect.width;
+
+        // Table is completely above viewport — hide
+        if (tableBottom < 0) {
+            stickyWrapper.style.display = 'none';
+            return;
+        }
+
+        // Table is visible on screen
+        if (tableTop < winHeight && tableBottom > 0) {
+            stickyWrapper.style.display = 'block';
+            stickyWrapper.style.width   = tableWidth + 'px';
+            stickyWrapper.style.left    = tableLeft + 'px';
+
+            // Table bottom is below viewport — stick to bottom of viewport
+            if (tableBottom > winHeight) {
+                stickyWrapper.style.position = 'fixed';
+                stickyWrapper.style.bottom   = '0px';
+                stickyWrapper.style.top      = 'auto';
+
+            // Table bottom is visible — stick to bottom of table
+            } else {
+                stickyWrapper.style.position = 'sticky';
+                stickyWrapper.style.bottom   = '0px';
+                stickyWrapper.style.top      = 'auto';
+            }
+        }
+    }
+
+    window.addEventListener('scroll', handleVisibility);
+    window.addEventListener('resize', function () {
+        updateStickyScrollbar();
+        handleVisibility();
+    });
+
+    updateStickyScrollbar();
+    handleVisibility();
+</script>
+
 {% endblock %}

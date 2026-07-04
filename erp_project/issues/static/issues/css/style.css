@@ -712,3 +712,44 @@ body {
 .erp-table tbody tr:hover td:nth-child(2) {
     background: #f4f5f7;
 }
+
+/* STICKY SCROLLBAR */
+.sticky-scrollbar-wrapper {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    height: 8px;
+    display: none;
+    z-index: 999;
+    scrollbar-width: thin;
+    scrollbar-color: #0052cc #dfe1e6;
+}
+
+.sticky-scrollbar-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.sticky-scrollbar-wrapper::-webkit-scrollbar-track {
+    background: #dfe1e6;
+}
+
+.sticky-scrollbar-wrapper::-webkit-scrollbar-thumb {
+    background: #0052cc;
+    border-radius: 4px;
+}
+
+.sticky-scrollbar-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #0065ff;
+}
+
+.sticky-scrollbar-inner {
+    height: 8px;
+}
+
+/* Also hide the original table scrollbar since sticky handles it */
+.table-scroll-hidden {
+    scrollbar-width: none;
+}
+
+.table-scroll-hidden::-webkit-scrollbar {
+    display: none;
+}
