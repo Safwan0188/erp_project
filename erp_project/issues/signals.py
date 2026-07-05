@@ -31,13 +31,13 @@ def create_notifications(sender, instance, created, **kwargs):
             Notification.objects.create(
                 issue   = instance,
                 type    = 'new_assignment',
-                message = f"New issue #{instance.issue_id} '{instance.summary}' has been created and assigned to {instance.assigned_to.name}."
+                message = f"New issue #{instance.issue_id} '{instance.task_name}' has been created and assigned to {instance.assigned_to.name}."
             )
         else:
             Notification.objects.create(
                 issue   = instance,
                 type    = 'new_assignment',
-                message = f"New issue #{instance.issue_id} '{instance.summary}' has been created."
+                message = f"New issue #{instance.issue_id} '{instance.task_name}' has been created."
             )
 
     if not created:
@@ -50,7 +50,7 @@ def create_notifications(sender, instance, created, **kwargs):
             Notification.objects.create(
                 issue   = instance,
                 type    = 'new_assignment',
-                message = f"Issue #{instance.issue_id} '{instance.summary}' has been assigned to {instance.assigned_to.name}."
+                message = f"Issue #{instance.issue_id} '{instance.task_name}' has been assigned to {instance.assigned_to.name}."
             )
 
         # Reassignment
@@ -59,7 +59,7 @@ def create_notifications(sender, instance, created, **kwargs):
             Notification.objects.create(
                 issue   = instance,
                 type    = 'reassignment',
-                message = f"Issue #{instance.issue_id} '{instance.summary}' has been reassigned from {old_assigned.name} to {instance.assigned_to.name}."
+                message = f"Issue #{instance.issue_id} '{instance.task_name}' has been reassigned from {old_assigned.name} to {instance.assigned_to.name}."
             )
 
         # QA Rejection
@@ -69,15 +69,15 @@ def create_notifications(sender, instance, created, **kwargs):
             Notification.objects.create(
                 issue   = instance,
                 type    = 'qa_rejection',
-                message = f"Issue #{instance.issue_id} '{instance.summary}' has failed QA verification."
+                message = f"Issue #{instance.issue_id} '{instance.task_name}' has failed QA verification."
             )
 
         # Issue Closure
         if (instance.status and old_status and
                 instance.status != old_status and
-                instance.status.name == 'Closed'):
+                instance.status.name == 'Completed'):
             Notification.objects.create(
                 issue   = instance,
                 type    = 'closure',
-                message = f"Issue #{instance.issue_id} '{instance.summary}' has been closed."
+                message = f"Issue #{instance.issue_id} '{instance.task_name}' has been closed."
             )

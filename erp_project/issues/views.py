@@ -7,7 +7,7 @@ from .models import Issue, Category, IssueType, Status, QAStatus, Developer, Not
 
 def issue_create(request):
     if request.method == 'POST':
-        form = IssueForm(request.POST)
+        form = IssueForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             return redirect('issue_list')
@@ -28,12 +28,14 @@ def issue_list(request):
     date_to   = request.GET.get('date_to', '')
 
     if query:
-        issues = issues.filter(
-            Q(issue_id__icontains=query)          |
-            Q(project__icontains=query)           |
-            Q(assigned_to__name__icontains=query) |
-            Q(reported_by__icontains=query)
-        )
+       issues = issues.filter(
+        Q(issue_id__icontains=query)          |
+        Q(project__icontains=query)           |
+        Q(assigned_to__name__icontains=query) |
+        Q(reported_by__icontains=query)       |
+        Q(task_name__icontains=query)         |
+        Q(module__icontains=query)
+    )
 
     if status:
         issues = issues.filter(status__name=status)
@@ -67,14 +69,13 @@ def issue_list(request):
 def issue_edit(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
     if request.method == 'POST':
-        form = IssueForm(request.POST, instance=issue)
+        form = IssueForm(request.POST, request.FILES, instance=issue)
         if form.is_valid():
             form.save()
             return redirect('issue_list')
     else:
         form = IssueForm(instance=issue)
     return render(request, 'issues/issue_form.html', {'form': form, 'edit': True})
-
 
 def issue_delete(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
@@ -102,24 +103,22 @@ def dashboard(request):
 
     # 11.2 Development Status Summary
     open_count  = issues.filter(status__name='Open').count()
-    assigned    = issues.filter(status__name='Assigned').count()
     in_progress = issues.filter(status__name='In Progress').count()
-    resolved    = issues.filter(status__name='Resolved').count()
-    qa_verif    = issues.filter(status__name='QA Verification').count()
-    closed      = issues.filter(status__name='Closed').count()
-    reopened    = issues.filter(status__name='Reopen').count()
+    on_hold     = issues.filter(status__name='On Hold').count()
+    completed   = issues.filter(status__name='Completed').count()
+    reopened    = issues.filter(status__name='Reopened').count()
 
     # 11.3 Delivery Summary
-    delivered = issues.filter(status__name='Closed').count()
-    delayed   = issues.exclude(status__name='Closed').filter(approx_delivery__lt=today).count()
-    on_track  = issues.exclude(status__name='Closed').filter(approx_delivery__gte=today).count()
+    delivered = issues.filter(status__name='Completed').count()
+    delayed   = issues.exclude(status__name='Completed').filter(approx_delivery__lt=today).count()
+    on_track  = issues.exclude(status__name='Completed').filter(approx_delivery__gte=today).count()
 
     # 11.4 Developer Performance
     developers = issues.exclude(assigned_to__isnull=True).values('assigned_to__name').annotate(
     total_assigned = Count('issue_id'),
-    completed      = Count('issue_id', filter=Q(status__name='Closed')),
+    completed      = Count('issue_id', filter=Q(status__name='Completed')),
     in_progress    = Count('issue_id', filter=Q(status__name='In Progress')),
-    delayed        = Count('issue_id', filter=Q(approx_delivery__lt=today) & ~Q(status__name='Closed')),
+    delayed        = Count('issue_id', filter=Q(approx_delivery__lt=today) & ~Q(status__name='Completed')),
     ).order_by('assigned_to__name')
 
     for dev in developers:
@@ -133,11 +132,9 @@ def dashboard(request):
         'medium'      : medium,
         'regular'     : regular,
         'open_count'  : open_count,
-        'assigned'    : assigned,
         'in_progress' : in_progress,
-        'resolved'    : resolved,
-        'qa_verif'    : qa_verif,
-        'closed'      : closed,
+        'on_hold'     : on_hold,
+        'completed'   : completed,
         'reopened'    : reopened,
         'total_tasks' : total,
         'delivered'   : delivered,

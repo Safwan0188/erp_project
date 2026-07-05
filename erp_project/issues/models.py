@@ -47,8 +47,10 @@ class Issue(models.Model):
     project         = models.CharField(max_length=200)
     category        = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     type            = models.ForeignKey(IssueType, on_delete=models.SET_NULL, null=True, blank=True)
-    summary         = models.CharField(max_length=300)
+    module          = models.CharField(max_length=200, blank=True, null=True)
+    task_name       = models.CharField(max_length=300)
     description     = models.TextField(blank=True, null=True)
+    attachments     = models.FileField(upload_to='attachments/', blank=True, null=True)
     reported_by     = models.CharField(max_length=100)
     reported_date   = models.DateField()
     assigned_to     = models.ForeignKey(Developer, on_delete=models.SET_NULL, null=True, blank=True)
@@ -61,7 +63,7 @@ class Issue(models.Model):
     notes           = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"[{self.issue_id}] {self.summary}"
+        return f"[{self.issue_id}] {self.task_name}"
     
 class Notification(models.Model):
     TYPE_CHOICES = [

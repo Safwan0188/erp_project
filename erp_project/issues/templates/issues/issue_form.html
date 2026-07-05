@@ -13,7 +13,7 @@
 </div>
 
 <div class="erp-card">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
         {% if form.errors %}
@@ -46,13 +46,29 @@
                 <label class="form-label">Type</label>
                 {{ form.type }}
             </div>
-            <div class="col-12">
-                <label class="form-label">Summary</label>
-                {{ form.summary }}
+            <div class="col-md-4">
+                <label class="form-label">Module</label>
+                {{ form.module }}
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Task Name</label>
+                {{ form.task_name }}
             </div>
             <div class="col-12">
                 <label class="form-label">Description</label>
                 {{ form.description }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Attachments</label>
+                {{ form.attachments }}
+                {% if form.instance.attachments %}
+                <div class="mt-2" style="font-size:13px; color:#5e6c84;">
+                    Current file:
+                    <a href="{{ form.instance.attachments.url }}" target="_blank">
+                        {{ form.instance.attachments.name }}
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -77,6 +93,7 @@
             <div class="col-md-4">
                 <label class="form-label">Allocated Time</label>
                 {{ form.allocated_time }}
+                <div class="form-text text-muted">e.g. 3 - 5 hrs or 10 - 12 days</div>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Approx. Delivery Date</label>
@@ -131,26 +148,22 @@
 
     categorySelect.addEventListener('change', function () {
         const selectedText = this.options[this.selectedIndex].text.trim();
-
         if (categoryAllocatedMap[selectedText]) {
             allocatedInput.value = categoryAllocatedMap[selectedText];
         } else {
             allocatedInput.value = '';
         }
     });
-</script>
 
-<script>
-    const reportedDateInput  = document.getElementById('id_reported_date');
-    const approxDelivery     = document.getElementById('id_approx_delivery');
-    const completionDate     = document.getElementById('id_completion_date');
+    const reportedDateInput = document.getElementById('id_reported_date');
+    const approxDelivery    = document.getElementById('id_approx_delivery');
+    const completionDate    = document.getElementById('id_completion_date');
 
     function updateMinDates() {
         const reportedVal = reportedDateInput.value;
         if (reportedVal) {
-            approxDelivery.min  = reportedVal;
-            completionDate.min  = reportedVal;
-
+            approxDelivery.min = reportedVal;
+            completionDate.min = reportedVal;
             if (approxDelivery.value && approxDelivery.value < reportedVal) {
                 approxDelivery.value = reportedVal;
             }

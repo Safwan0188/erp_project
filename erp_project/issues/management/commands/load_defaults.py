@@ -14,11 +14,11 @@ class Command(BaseCommand):
         for name in types:
             IssueType.objects.get_or_create(name=name, defaults={'is_default': True})
 
-        statuses = ['Open', 'Assigned', 'In Progress', 'Resolved', 'QA Verification', 'Closed', 'Reopen']
+        statuses = ['Open', 'In Progress', 'On Hold', 'Completed', 'Reopened']
         for name in statuses:
             Status.objects.get_or_create(name=name, defaults={'is_default': True})
 
-        qa_statuses = ['Pending', 'Passed', 'Failed']
+        qa_statuses = ['Open', 'In Progress', 'On Hold', 'Approved', 'Unapproved']
         for name in qa_statuses:
             QAStatus.objects.get_or_create(name=name, defaults={'is_default': True})
 

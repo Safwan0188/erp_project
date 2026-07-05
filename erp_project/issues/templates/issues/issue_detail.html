@@ -41,13 +41,29 @@
                 <span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span>
             </div>
         </div>
-        <div class="col-md-8">
-            <div class="detail-label">Summary</div>
-            <div class="detail-value">{{ issue.summary }}</div>
+        <div class="col-md-4">
+            <div class="detail-label">Module</div>
+            <div class="detail-value">{{ issue.module|default:"-" }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Task Name</div>
+            <div class="detail-value">{{ issue.task_name }}</div>
         </div>
         <div class="col-12">
             <div class="detail-label">Description</div>
             <div class="detail-value">{{ issue.description|default:"-" }}</div>
+        </div>
+        <div class="col-12">
+            <div class="detail-label">Attachments</div>
+            <div class="detail-value">
+                {% if issue.attachments %}
+                <a href="{{ issue.attachments.url }}" target="_blank" class="btn-outline" style="padding:4px 12px; font-size:13px;">
+                    <i class="bi bi-paperclip"></i> {{ issue.attachments.name|slice:"12:" }}
+                </a>
+                {% else %}
+                -
+                {% endif %}
+            </div>
         </div>
     </div>
 

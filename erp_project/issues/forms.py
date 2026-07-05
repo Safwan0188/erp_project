@@ -14,7 +14,9 @@ class IssueForm(forms.ModelForm):
             'description'     : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'notes'           : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'project'         : forms.TextInput(attrs={'class': 'form-control'}),
-            'summary'         : forms.TextInput(attrs={'class': 'form-control'}),
+            'module'          : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Authentication'}),
+            'task_name'       : forms.TextInput(attrs={'class': 'form-control', 'style': 'max-width: 360px;'}),
+            'attachments'     : forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple': False}),
             'reported_by'     : forms.TextInput(attrs={'class': 'form-control'}),
             'allocated_time'  : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 3 - 5 hrs or 10 - 12 days'}),
             'qa_by'           : forms.TextInput(attrs={'class': 'form-control'}),
@@ -28,22 +30,18 @@ class IssueForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.date.today().isoformat()
-
+        self.fields['reported_date'].widget.attrs['min'] = today
         if not self.instance.pk:
-            # Creating — min is today for all date fields
             self.fields['reported_date'].initial = datetime.date.today()
-            self.fields['reported_date'].widget.attrs['min']   = today
             self.fields['approx_delivery'].widget.attrs['min'] = today
             self.fields['completion_date'].widget.attrs['min'] = today
         else:
-            # Editing — min is the original reported date for all date fields
             if self.instance.reported_date:
                 reported = self.instance.reported_date.isoformat()
                 self.fields['reported_date'].widget.attrs['min']   = reported
                 self.fields['approx_delivery'].widget.attrs['min'] = reported
                 self.fields['completion_date'].widget.attrs['min'] = reported
             else:
-                self.fields['reported_date'].widget.attrs['min']   = today
                 self.fields['approx_delivery'].widget.attrs['min'] = today
                 self.fields['completion_date'].widget.attrs['min'] = today
 
