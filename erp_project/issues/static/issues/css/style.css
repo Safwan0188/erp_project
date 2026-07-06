@@ -166,48 +166,48 @@ body {
     color: #42526e;
 }
 
-.status-assigned {
-    background: #fff0b3;
-    color: #974f0c;
-}
-
 .status-in_progress {
     background: #deebff;
     color: #0052cc;
 }
 
-.status-resolved {
+.status-on_hold {
+    background: #fff0b3;
+    color: #974f0c;
+}
+
+.status-completed {
     background: #e3fcef;
     color: #006644;
 }
 
-.status-qa_verification {
-    background: #eae6ff;
-    color: #403294;
-}
-
-.status-closed {
-    background: #172b4d;
-    color: #fff;
-}
-
-.status-reopen {
+.status-reopened {
     background: #ffebe6;
     color: #bf2600;
 }
 
 /* QA Status badges */
-.qa-pending {
+.qa-open {
     background: #dfe1e6;
     color: #42526e;
 }
 
-.qa-passed {
+.qa-in_progress {
+    background: #deebff;
+    color: #0052cc;
+}
+
+.qa-on_hold {
+    background: #fff0b3;
+    color: #974f0c;
+}
+
+.qa-approved {
     background: #e3fcef;
     color: #006644;
 }
 
-.qa-failed {
+.qa-rejected {
     background: #ffebe6;
     color: #bf2600;
 }
