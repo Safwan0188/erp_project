@@ -105,8 +105,15 @@
         </div>
     </div>
 
-    <div class="section-divider">QA & Notes</div>
-    <div class="row g-3">
+    <div class="section-divider">Developer Comments</div>
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="detail-value">{{ issue.developer_comments|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider">QA & Comments</div>
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="detail-label">QA By</div>
             <div class="detail-value">{{ issue.qa_by|default:"-" }}</div>
@@ -118,10 +125,21 @@
             </div>
         </div>
         <div class="col-12">
-            <div class="detail-label">Notes</div>
-            <div class="detail-value">{{ issue.notes|default:"-" }}</div>
+            <div class="detail-label">QA Comments</div>
+            <div class="detail-value">{{ issue.qa_comments|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider">Delivery</div>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="detail-label">Delivery Status</div>
+            <div class="detail-value">
+                <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">{{ issue.delivery_status.name|default:"-" }}</span>
+            </div>
         </div>
     </div>
 
 </div>
 {% endblock %}
+

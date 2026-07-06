@@ -109,7 +109,15 @@
             </div>
         </div>
 
-        <div class="section-divider">QA & Notes</div>
+        <div class="section-divider">Developer Comments</div>
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <label class="form-label">Developer Comments</label>
+                {{ form.developer_comments }}
+            </div>
+        </div>
+
+        <div class="section-divider">QA & Comments</div>
         <div class="row g-3 mb-4">
             <div class="col-md-4">
                 <label class="form-label">QA By</label>
@@ -120,8 +128,16 @@
                 {{ form.qa_status }}
             </div>
             <div class="col-12">
-                <label class="form-label">Notes</label>
-                {{ form.notes }}
+                <label class="form-label">QA Comments</label>
+                {{ form.qa_comments }}
+            </div>
+        </div>
+
+        <div class="section-divider">Delivery</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Delivery Status</label>
+                {{ form.delivery_status }}
             </div>
         </div>
 

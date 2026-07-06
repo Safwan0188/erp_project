@@ -65,7 +65,7 @@
     <!-- DELIVERY SUMMARY -->
     <div class="dash-panel">
         <div class="dash-panel-title">Delivery Summary</div>
-        <div class="dash-grid dash-grid-4">
+        <div class="dash-grid dash-grid-5">
             <div class="dash-stat">
                 <div class="dash-stat-value">{{ total_tasks }}</div>
                 <div class="dash-stat-label">Total Tasks</div>
@@ -73,6 +73,10 @@
             <div class="dash-stat">
                 <div class="dash-stat-value" style="color:#006644;">{{ delivered }}</div>
                 <div class="dash-stat-label">Delivered</div>
+            </div>
+            <div class="dash-stat">
+                <div class="dash-stat-value" style="color:#bf2600;">{{ undelivered }}</div>
+                <div class="dash-stat-label">Undelivered</div>
             </div>
             <div class="dash-stat">
                 <div class="dash-stat-value" style="color:#0052cc;">{{ on_track }}</div>

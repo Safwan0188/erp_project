@@ -69,6 +69,17 @@
                 </select>
             </div>
 
+            <!-- Delivery Status -->
+            <div class="col-md-2">
+                <label class="form-label">Delivery Status</label>
+                <select name="delivery_status" class="form-select">
+                    <option value="">All Delivery Statuses</option>
+                    {% for d in all_delivery_statuses %}
+                    <option value="{{ d.name }}" {% if delivery_status == d.name %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <!-- Delivery Date From -->
             <div class="col-md-2">
                 <label class="form-label">Delivery Date From</label>
@@ -114,10 +125,12 @@
                     <th>Allocated Time</th>
                     <th>Approx. Delivery</th>
                     <th>Development Status</th>
+                    <th>Developer Comments</th>
                     <th>Completion Date</th>
                     <th>QA By</th>
                     <th>QA Status</th>
-                    <th>Notes</th>
+                    <th>QA Comments</th>
+                    <th>Delivery Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -165,6 +178,9 @@
                             {{ issue.status.name|default:"-" }}
                         </span>
                     </td>
+                    <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        {{ issue.developer_comments|default:"-" }}
+                    </td>
                     <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
                     <td>{{ issue.qa_by|default:"-" }}</td>
                     <td>
@@ -173,12 +189,17 @@
                         </span>
                     </td>
                     <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        {{ issue.notes|default:"-" }}
+                        {{ issue.qa_comments|default:"-" }}
+                    </td>
+                    <td>
+                        <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">
+                            {{ issue.delivery_status.name|default:"-" }}
+                        </span>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="18" class="text-center py-5 text-muted">
+                    <td colspan="20" class="text-center py-5 text-muted">
                         <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                         No issues yet. <a href="{% url 'issue_create' %}">Create your first one!</a>
                     </td>

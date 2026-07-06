@@ -1,8 +1,8 @@
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import IssueForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeveloperForm
-from .models import Issue, Category, IssueType, Status, QAStatus, Developer, Notification
+from .forms import IssueForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm, DeveloperForm
+from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, Notification
 
 
 def issue_create(request):
@@ -19,23 +19,24 @@ def issue_create(request):
 def issue_list(request):
     issues = Issue.objects.all().order_by('-issue_id')
 
-    query     = request.GET.get('q', '')
-    status    = request.GET.get('status', '')
-    category  = request.GET.get('category', '')
-    type_     = request.GET.get('type', '')
-    qa_status = request.GET.get('qa_status', '')
-    date_from = request.GET.get('date_from', '')
-    date_to   = request.GET.get('date_to', '')
+    query           = request.GET.get('q', '')
+    status          = request.GET.get('status', '')
+    category        = request.GET.get('category', '')
+    type_           = request.GET.get('type', '')
+    qa_status       = request.GET.get('qa_status', '')
+    delivery_status = request.GET.get('delivery_status', '')
+    date_from       = request.GET.get('date_from', '')
+    date_to         = request.GET.get('date_to', '')
 
     if query:
-       issues = issues.filter(
-        Q(issue_id__icontains=query)          |
-        Q(project__icontains=query)           |
-        Q(assigned_to__name__icontains=query) |
-        Q(reported_by__icontains=query)       |
-        Q(task_name__icontains=query)         |
-        Q(module__icontains=query)
-    )
+        issues = issues.filter(
+            Q(issue_id__icontains=query)          |
+            Q(project__icontains=query)           |
+            Q(assigned_to__name__icontains=query) |
+            Q(reported_by__icontains=query)       |
+            Q(task_name__icontains=query)         |
+            Q(module__icontains=query)
+        )
 
     if status:
         issues = issues.filter(status__name=status)
@@ -45,24 +46,28 @@ def issue_list(request):
         issues = issues.filter(type__name=type_)
     if qa_status:
         issues = issues.filter(qa_status__name=qa_status)
+    if delivery_status:
+        issues = issues.filter(delivery_status__name=delivery_status)
     if date_from:
         issues = issues.filter(approx_delivery__gte=date_from)
     if date_to:
         issues = issues.filter(approx_delivery__lte=date_to)
 
     return render(request, 'issues/issue_list.html', {
-        'issues'         : issues,
-        'query'          : query,
-        'status'         : status,
-        'category'       : category,
-        'type'           : type_,
-        'qa_status'      : qa_status,
-        'date_from'      : date_from,
-        'date_to'        : date_to,
-        'all_statuses'   : Status.objects.all(),
-        'all_categories' : Category.objects.all(),
-        'all_types'      : IssueType.objects.all(),
-        'all_qa_statuses': QAStatus.objects.all(),
+        'issues'              : issues,
+        'query'               : query,
+        'status'              : status,
+        'category'            : category,
+        'type'                : type_,
+        'qa_status'           : qa_status,
+        'delivery_status'     : delivery_status,
+        'date_from'           : date_from,
+        'date_to'             : date_to,
+        'all_statuses'        : Status.objects.all(),
+        'all_categories'      : Category.objects.all(),
+        'all_types'           : IssueType.objects.all(),
+        'all_qa_statuses'     : QAStatus.objects.all(),
+        'all_delivery_statuses': DeliveryStatus.objects.all(),
     })
 
 
@@ -76,6 +81,7 @@ def issue_edit(request, pk):
     else:
         form = IssueForm(instance=issue)
     return render(request, 'issues/issue_form.html', {'form': form, 'edit': True})
+
 
 def issue_delete(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
@@ -109,16 +115,17 @@ def dashboard(request):
     reopened    = issues.filter(status__name='Reopened').count()
 
     # 11.3 Delivery Summary
-    delivered = issues.filter(status__name='Completed').count()
-    delayed   = issues.exclude(status__name='Completed').filter(approx_delivery__lt=today).count()
-    on_track  = issues.exclude(status__name='Completed').filter(approx_delivery__gte=today).count()
+    delivered   = issues.filter(delivery_status__name='Delivered').count()
+    undelivered = issues.filter(delivery_status__name='Undelivered').count()
+    on_track    = issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__gte=today).count()
+    delayed     = issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__lt=today).count()
 
     # 11.4 Developer Performance
     developers = issues.exclude(assigned_to__isnull=True).values('assigned_to__name').annotate(
-    total_assigned = Count('issue_id'),
-    completed      = Count('issue_id', filter=Q(status__name='Completed')),
-    in_progress    = Count('issue_id', filter=Q(status__name='In Progress')),
-    delayed        = Count('issue_id', filter=Q(approx_delivery__lt=today) & ~Q(status__name='Completed')),
+        total_assigned = Count('issue_id'),
+        completed      = Count('issue_id', filter=Q(status__name='Completed')),
+        in_progress    = Count('issue_id', filter=Q(status__name='In Progress')),
+        delayed        = Count('issue_id', filter=Q(approx_delivery__lt=today) & ~Q(status__name='Completed')),
     ).order_by('assigned_to__name')
 
     for dev in developers:
@@ -138,6 +145,7 @@ def dashboard(request):
         'reopened'    : reopened,
         'total_tasks' : total,
         'delivered'   : delivered,
+        'undelivered' : undelivered,
         'on_track'    : on_track,
         'delayed'     : delayed,
         'developers'  : developers,
@@ -168,6 +176,11 @@ def settings_page(request):
             if form.is_valid():
                 form.save()
 
+        elif form_type == 'delivery_status':
+            form = DeliveryStatusForm(request.POST)
+            if form.is_valid():
+                form.save()
+
         elif form_type == 'developer':
             form = DeveloperForm(request.POST)
             if form.is_valid():
@@ -178,11 +191,12 @@ def settings_page(request):
             obj_id     = request.POST.get('obj_id')
 
             model_map = {
-                'category'   : Category,
-                'issue_type' : IssueType,
-                'status'     : Status,
-                'qa_status'  : QAStatus,
-                'developer'  : Developer,
+                'category'        : Category,
+                'issue_type'      : IssueType,
+                'status'          : Status,
+                'qa_status'       : QAStatus,
+                'delivery_status' : DeliveryStatus,
+                'developer'       : Developer,
             }
 
             if model_name in model_map:
@@ -193,16 +207,18 @@ def settings_page(request):
         return redirect('settings_page')
 
     context = {
-        'categories'     : Category.objects.all(),
-        'issue_types'    : IssueType.objects.all(),
-        'statuses'       : Status.objects.all(),
-        'qa_statuses'    : QAStatus.objects.all(),
-        'developers'     : Developer.objects.all(),
-        'category_form'  : CategoryForm(),
-        'type_form'      : IssueTypeForm(),
-        'status_form'    : StatusForm(),
-        'qa_status_form' : QAStatusForm(),
-        'developer_form' : DeveloperForm(),
+        'categories'          : Category.objects.all(),
+        'issue_types'         : IssueType.objects.all(),
+        'statuses'            : Status.objects.all(),
+        'qa_statuses'         : QAStatus.objects.all(),
+        'delivery_statuses'   : DeliveryStatus.objects.all(),
+        'developers'          : Developer.objects.all(),
+        'category_form'       : CategoryForm(),
+        'type_form'           : IssueTypeForm(),
+        'status_form'         : StatusForm(),
+        'qa_status_form'      : QAStatusForm(),
+        'delivery_status_form': DeliveryStatusForm(),
+        'developer_form'      : DeveloperForm(),
     }
     return render(request, 'issues/settings.html', context)
 
@@ -215,6 +231,7 @@ def notification_list(request):
         'notifications' : notifications,
         'unread_count'  : unread_count,
     })
+
 
 def get_unread_count(request):
     return {'unread_count': Notification.objects.filter(is_read=False).count()}

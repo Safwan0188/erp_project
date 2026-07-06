@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from issues.models import Category, IssueType, Status, QAStatus
+from issues.models import Category, IssueType, Status, QAStatus, DeliveryStatus
+
 
 class Command(BaseCommand):
     help = 'Load default options'
@@ -18,8 +19,12 @@ class Command(BaseCommand):
         for name in statuses:
             Status.objects.get_or_create(name=name, defaults={'is_default': True})
 
-        qa_statuses = ['Open', 'In Progress', 'On Hold', 'Approved', 'Unapproved']
+        qa_statuses = ['Open', 'In Progress', 'On Hold', 'Approved', 'Rejected']
         for name in qa_statuses:
             QAStatus.objects.get_or_create(name=name, defaults={'is_default': True})
+
+        delivery_statuses = ['Delivered', 'Undelivered']
+        for name in delivery_statuses:
+            DeliveryStatus.objects.get_or_create(name=name, defaults={'is_default': True})
 
         self.stdout.write(self.style.SUCCESS('Default options loaded successfully!'))
