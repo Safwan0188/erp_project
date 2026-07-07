@@ -713,7 +713,7 @@ body {
 
 .sticky-scrollbar-wrapper::-webkit-scrollbar-thumb {
     background: #0052cc;
-    border-radius: 4px;
+    border-radius: 5px;
 }
 
 .sticky-scrollbar-wrapper::-webkit-scrollbar-thumb:hover {
