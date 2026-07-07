@@ -48,6 +48,12 @@ class Developer(models.Model):
     def __str__(self):
         return self.name
 
+class QAMember(models.Model):
+    name       = models.CharField(max_length=100, unique=True)
+    is_default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
 
 class Issue(models.Model):
 
@@ -67,7 +73,7 @@ class Issue(models.Model):
     status               = models.ForeignKey(Status, on_delete=models.SET_NULL, null=True, blank=True)
     developer_comments   = models.TextField(blank=True, null=True)
     completion_date      = models.DateField(blank=True, null=True)
-    qa_by                = models.CharField(max_length=100, blank=True, null=True)
+    qa_by                = models.ManyToManyField('QAMember', blank=True, related_name='issues')
     qa_status            = models.ForeignKey(QAStatus, on_delete=models.SET_NULL, null=True, blank=True)
     qa_comments          = models.TextField(blank=True, null=True)
     delivery_status      = models.ForeignKey(DeliveryStatus, on_delete=models.SET_NULL, null=True, blank=True)

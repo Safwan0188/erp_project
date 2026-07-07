@@ -131,6 +131,7 @@
                     <th>QA Status</th>
                     <th>QA Comments</th>
                     <th>Delivery Status</th>
+                    <th style="width:1px; padding:0; border:none;"></th>
                 </tr>
             </thead>
             <tbody>
@@ -182,7 +183,17 @@
                         {{ issue.developer_comments|default:"-" }}
                     </td>
                     <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
-                    <td>{{ issue.qa_by|default:"-" }}</td>
+                    <td>
+                        {% if issue.qa_by.all %}
+                            {% for member in issue.qa_by.all %}
+                                <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">
+                                    {{ member.name }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">
                             {{ issue.qa_status.name|default:"-" }}
@@ -191,15 +202,20 @@
                     <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         {{ issue.qa_comments|default:"-" }}
                     </td>
-                    <td>
+                    <td style="white-space:nowrap;">
+                        {% if issue.delivery_status %}
                         <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">
-                            {{ issue.delivery_status.name|default:"-" }}
+                            {{ issue.delivery_status.name }}
                         </span>
+                        {% else %}
+                        -
+                        {% endif %}
                     </td>
+                    <td style="width:1px; padding:0; border:none;"></td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="20" class="text-center py-5 text-muted">
+                    <td colspan="21" class="text-center py-5 text-muted">
                         <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                         No issues yet. <a href="{% url 'issue_create' %}">Create your first one!</a>
                     </td>

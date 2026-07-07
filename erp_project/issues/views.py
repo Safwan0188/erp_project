@@ -1,8 +1,8 @@
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import IssueForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm, DeveloperForm
-from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, Notification
+from .forms import IssueForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm, QAMemberForm, DeveloperForm
+from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, QAMember, Notification
 
 
 def issue_create(request):
@@ -54,19 +54,19 @@ def issue_list(request):
         issues = issues.filter(approx_delivery__lte=date_to)
 
     return render(request, 'issues/issue_list.html', {
-        'issues'              : issues,
-        'query'               : query,
-        'status'              : status,
-        'category'            : category,
-        'type'                : type_,
-        'qa_status'           : qa_status,
-        'delivery_status'     : delivery_status,
-        'date_from'           : date_from,
-        'date_to'             : date_to,
-        'all_statuses'        : Status.objects.all(),
-        'all_categories'      : Category.objects.all(),
-        'all_types'           : IssueType.objects.all(),
-        'all_qa_statuses'     : QAStatus.objects.all(),
+        'issues'               : issues,
+        'query'                : query,
+        'status'               : status,
+        'category'             : category,
+        'type'                 : type_,
+        'qa_status'            : qa_status,
+        'delivery_status'      : delivery_status,
+        'date_from'            : date_from,
+        'date_to'              : date_to,
+        'all_statuses'         : Status.objects.all(),
+        'all_categories'       : Category.objects.all(),
+        'all_types'            : IssueType.objects.all(),
+        'all_qa_statuses'      : QAStatus.objects.all(),
         'all_delivery_statuses': DeliveryStatus.objects.all(),
     })
 
@@ -181,6 +181,11 @@ def settings_page(request):
             if form.is_valid():
                 form.save()
 
+        elif form_type == 'qa_member':
+            form = QAMemberForm(request.POST)
+            if form.is_valid():
+                form.save()
+
         elif form_type == 'developer':
             form = DeveloperForm(request.POST)
             if form.is_valid():
@@ -196,6 +201,7 @@ def settings_page(request):
                 'status'          : Status,
                 'qa_status'       : QAStatus,
                 'delivery_status' : DeliveryStatus,
+                'qa_member'       : QAMember,
                 'developer'       : Developer,
             }
 
@@ -207,18 +213,20 @@ def settings_page(request):
         return redirect('settings_page')
 
     context = {
-        'categories'          : Category.objects.all(),
-        'issue_types'         : IssueType.objects.all(),
-        'statuses'            : Status.objects.all(),
-        'qa_statuses'         : QAStatus.objects.all(),
-        'delivery_statuses'   : DeliveryStatus.objects.all(),
-        'developers'          : Developer.objects.all(),
-        'category_form'       : CategoryForm(),
-        'type_form'           : IssueTypeForm(),
-        'status_form'         : StatusForm(),
-        'qa_status_form'      : QAStatusForm(),
-        'delivery_status_form': DeliveryStatusForm(),
-        'developer_form'      : DeveloperForm(),
+        'categories'           : Category.objects.all(),
+        'issue_types'          : IssueType.objects.all(),
+        'statuses'             : Status.objects.all(),
+        'qa_statuses'          : QAStatus.objects.all(),
+        'delivery_statuses'    : DeliveryStatus.objects.all(),
+        'qa_members'           : QAMember.objects.all(),
+        'developers'           : Developer.objects.all(),
+        'category_form'        : CategoryForm(),
+        'type_form'            : IssueTypeForm(),
+        'status_form'          : StatusForm(),
+        'qa_status_form'       : QAStatusForm(),
+        'delivery_status_form' : DeliveryStatusForm(),
+        'qa_member_form'       : QAMemberForm(),
+        'developer_form'       : DeveloperForm(),
     }
     return render(request, 'issues/settings.html', context)
 

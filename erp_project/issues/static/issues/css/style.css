@@ -666,6 +666,11 @@ body {
     z-index: 3;
 }
 
+.erp-table tbody tr:hover td:nth-child(1),
+.erp-table tbody tr:hover td:nth-child(2) {
+    background: #f4f5f7;
+}
+
 /* ALL COLUMNS DIVIDER */
 .erp-table th,
 .erp-table td {
@@ -731,4 +736,39 @@ body {
     .dev-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* QA MEMBER CHECKBOXES */
+.qa-checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.qa-checkbox-list li {
+    list-style: none;
+}
+
+.qa-checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f4f5f7;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.qa-checkbox-list label:hover {
+    background: #deebff;
+    border-color: #0052cc;
+}
+
+.qa-checkbox-list input[type="checkbox"]:checked+span,
+.qa-checkbox-list input[type="checkbox"] {
+    accent-color: #0052cc;
 }
