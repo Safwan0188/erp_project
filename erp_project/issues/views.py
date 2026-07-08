@@ -69,13 +69,6 @@ def issue_list(request):
         'all_types'            : IssueType.objects.all(),
         'all_qa_statuses'      : QAStatus.objects.all(),
         'all_delivery_statuses': DeliveryStatus.objects.all(),
-        # sub-list querysets
-        'dev_pending_issues'    : Issue.objects.filter(status__name__in=['Open', 'On Hold']).order_by('-issue_id'),
-        'dev_inprogress_issues' : Issue.objects.filter(status__name='In Progress').order_by('-issue_id'),
-        'dev_completed_issues'  : Issue.objects.filter(status__name='Completed').order_by('-issue_id'),
-        'qa_pending_issues'     : Issue.objects.filter(qa_status__name__in=['Open', 'On Hold']).order_by('-issue_id'),
-        'qa_inprogress_issues'  : Issue.objects.filter(qa_status__name='In Progress').order_by('-issue_id'),
-        'qa_completed_issues'   : Issue.objects.filter(qa_status__name='Approved').order_by('-issue_id'),
     })
 
 
