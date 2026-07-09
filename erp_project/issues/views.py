@@ -54,23 +54,35 @@ def issue_list(request):
         issues = issues.filter(approx_delivery__lte=date_to)
 
     return render(request, 'issues/issue_list.html', {
-        # existing context
-        'issues'               : issues,
-        'query'                : query,
-        'status'               : status,
-        'category'             : category,
-        'type'                 : type_,
-        'qa_status'            : qa_status,
-        'delivery_status'      : delivery_status,
-        'date_from'            : date_from,
-        'date_to'              : date_to,
-        'all_statuses'         : Status.objects.all(),
-        'all_categories'       : Category.objects.all(),
-        'all_types'            : IssueType.objects.all(),
-        'all_qa_statuses'      : QAStatus.objects.all(),
-        'all_delivery_statuses': DeliveryStatus.objects.all(),
-    })
-
+    # existing context
+    'issues'               : issues,
+    'query'                : query,
+    'status'               : status,
+    'category'             : category,
+    'type'                 : type_,
+    'qa_status'            : qa_status,
+    'delivery_status'      : delivery_status,
+    'date_from'            : date_from,
+    'date_to'              : date_to,
+    'all_statuses'         : Status.objects.all(),
+    'all_categories'       : Category.objects.all(),
+    'all_types'            : IssueType.objects.all(),
+    'all_qa_statuses'      : QAStatus.objects.all(),
+    'all_delivery_statuses': DeliveryStatus.objects.all(),
+    # 4 tab sublists
+    'pending_issues'   : Issue.objects.filter(
+        Q(status__name__in=['Open', 'On Hold']) |
+        Q(qa_status__name__in=['Open', 'On Hold'])
+    ).distinct().order_by('-issue_id'),
+    'inprogress_issues': Issue.objects.filter(
+        Q(status__name='In Progress') |
+        Q(qa_status__name='In Progress')
+    ).distinct().order_by('-issue_id'),
+    'completed_issues' : Issue.objects.filter(
+         Q(status__name='Completed') |
+        Q(qa_status__name__in=['Approved', 'Rejected'])
+    ).distinct().order_by('-issue_id'),
+})
 
 def issue_edit(request, pk):
     issue = get_object_or_404(Issue, pk=pk)

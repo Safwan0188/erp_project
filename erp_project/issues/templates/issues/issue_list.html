@@ -10,9 +10,8 @@
     </a>
 </div>
 
-
 <!-- SEARCH & FILTER BAR -->
-<div class="erp-card mb-3" id="filter-bar">
+<div class="erp-card mb-3">
     <form method="GET">
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -88,7 +87,23 @@
     </form>
 </div>
 
-<!-- ALL ISSUES TAB -->
+<!-- TABS -->
+<div class="issue-tabs mb-3">
+    <button class="issue-tab active" id="tab-btn-all" onclick="switchTab('all')">
+        <i class="bi bi-card-list"></i> All Issues
+    </button>
+    <button class="issue-tab" id="tab-btn-pending" onclick="switchTab('pending')">
+        <i class="bi bi-hourglass-split"></i> Pending / On Hold
+    </button>
+    <button class="issue-tab" id="tab-btn-inprogress" onclick="switchTab('inprogress')">
+        <i class="bi bi-play-circle"></i> In Progress
+    </button>
+    <button class="issue-tab" id="tab-btn-completed" onclick="switchTab('completed')">
+        <i class="bi bi-check-circle"></i> Completed
+    </button>
+</div>
+
+<!-- ALL ISSUES -->
 <div class="tab-content" id="tab-all">
     <div class="erp-card" style="padding:0;">
         <div class="table-scroll-hidden">
@@ -173,30 +188,322 @@
     </div>
 </div>
 
+<!-- PENDING / ON HOLD -->
+<div class="tab-content" id="tab-pending" style="display:none;">
+    <div class="erp-card" style="padding:0;">
+        <div class="table-scroll-hidden">
+            <table class="table erp-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="min-width:80px;">Issue ID</th>
+                        <th style="min-width:130px;">Project</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Module</th>
+                        <th>Task Name</th>
+                        <th>Description</th>
+                        <th>Attachments</th>
+                        <th>Reported By</th>
+                        <th>Reported Date</th>
+                        <th>Assigned To</th>
+                        <th>Allocated Time</th>
+                        <th>Approx. Delivery</th>
+                        <th>Development Status</th>
+                        <th>Developer Comments</th>
+                        <th>Completion Date</th>
+                        <th>QA By</th>
+                        <th>QA Status</th>
+                        <th>QA Comments</th>
+                        <th>Delivery Status</th>
+                        <th style="width:1px; padding:0; border:none;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in pending_issues %}
+                    <tr style="cursor:pointer;" onclick="window.location='{% url 'issue_detail' issue.issue_id %}'">
+                        <td style="min-width:80px;"><span class="issue-id">#{{ issue.issue_id }}</span></td>
+                        <td style="min-width:130px;">{{ issue.project }}</td>
+                        <td><span class="badge-status category-{{ issue.category.name|slugify_badge }}">{{ issue.category.name|default:"-" }}</span></td>
+                        <td><span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span></td>
+                        <td style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.module|default:"-" }}</td>
+                        <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.task_name }}</td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.description|default:"-" }}</td>
+                        <td>
+                            {% if issue.attachments %}
+                            <a href="{{ issue.attachments.url }}" target="_blank" onclick="event.stopPropagation();" style="font-size:12px; color:#0052cc;">
+                                <i class="bi bi-paperclip"></i> View
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>{{ issue.reported_by }}</td>
+                        <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
+                        <td>{{ issue.assigned_to.name|default:"-" }}</td>
+                        <td>{{ issue.allocated_time }}</td>
+                        <td style="white-space:nowrap;">{{ issue.approx_delivery }}</td>
+                        <td><span class="badge-status status-{{ issue.status.name|slugify_badge }}">{{ issue.status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
+                        <td>
+                            {% if issue.qa_by.all %}
+                                {% for member in issue.qa_by.all %}
+                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
+                                {% endfor %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.qa_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">
+                            {% if issue.delivery_status %}
+                            <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">{{ issue.delivery_status.name }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="width:1px; padding:0; border:none;"></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="21" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            No issues found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- IN PROGRESS -->
+<div class="tab-content" id="tab-inprogress" style="display:none;">
+    <div class="erp-card" style="padding:0;">
+        <div class="table-scroll-hidden">
+            <table class="table erp-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="min-width:80px;">Issue ID</th>
+                        <th style="min-width:130px;">Project</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Module</th>
+                        <th>Task Name</th>
+                        <th>Description</th>
+                        <th>Attachments</th>
+                        <th>Reported By</th>
+                        <th>Reported Date</th>
+                        <th>Assigned To</th>
+                        <th>Allocated Time</th>
+                        <th>Approx. Delivery</th>
+                        <th>Development Status</th>
+                        <th>Developer Comments</th>
+                        <th>Completion Date</th>
+                        <th>QA By</th>
+                        <th>QA Status</th>
+                        <th>QA Comments</th>
+                        <th>Delivery Status</th>
+                        <th style="width:1px; padding:0; border:none;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in inprogress_issues %}
+                    <tr style="cursor:pointer;" onclick="window.location='{% url 'issue_detail' issue.issue_id %}'">
+                        <td style="min-width:80px;"><span class="issue-id">#{{ issue.issue_id }}</span></td>
+                        <td style="min-width:130px;">{{ issue.project }}</td>
+                        <td><span class="badge-status category-{{ issue.category.name|slugify_badge }}">{{ issue.category.name|default:"-" }}</span></td>
+                        <td><span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span></td>
+                        <td style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.module|default:"-" }}</td>
+                        <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.task_name }}</td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.description|default:"-" }}</td>
+                        <td>
+                            {% if issue.attachments %}
+                            <a href="{{ issue.attachments.url }}" target="_blank" onclick="event.stopPropagation();" style="font-size:12px; color:#0052cc;">
+                                <i class="bi bi-paperclip"></i> View
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>{{ issue.reported_by }}</td>
+                        <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
+                        <td>{{ issue.assigned_to.name|default:"-" }}</td>
+                        <td>{{ issue.allocated_time }}</td>
+                        <td style="white-space:nowrap;">{{ issue.approx_delivery }}</td>
+                        <td><span class="badge-status status-{{ issue.status.name|slugify_badge }}">{{ issue.status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
+                        <td>
+                            {% if issue.qa_by.all %}
+                                {% for member in issue.qa_by.all %}
+                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
+                                {% endfor %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.qa_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">
+                            {% if issue.delivery_status %}
+                            <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">{{ issue.delivery_status.name }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="width:1px; padding:0; border:none;"></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="21" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            No issues found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- COMPLETED -->
+<div class="tab-content" id="tab-completed" style="display:none;">
+    <div class="erp-card" style="padding:0;">
+        <div class="table-scroll-hidden">
+            <table class="table erp-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="min-width:80px;">Issue ID</th>
+                        <th style="min-width:130px;">Project</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Module</th>
+                        <th>Task Name</th>
+                        <th>Description</th>
+                        <th>Attachments</th>
+                        <th>Reported By</th>
+                        <th>Reported Date</th>
+                        <th>Assigned To</th>
+                        <th>Allocated Time</th>
+                        <th>Approx. Delivery</th>
+                        <th>Development Status</th>
+                        <th>Developer Comments</th>
+                        <th>Completion Date</th>
+                        <th>QA By</th>
+                        <th>QA Status</th>
+                        <th>QA Comments</th>
+                        <th>Delivery Status</th>
+                        <th style="width:1px; padding:0; border:none;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in completed_issues %}
+                    <tr style="cursor:pointer;" onclick="window.location='{% url 'issue_detail' issue.issue_id %}'">
+                        <td style="min-width:80px;"><span class="issue-id">#{{ issue.issue_id }}</span></td>
+                        <td style="min-width:130px;">{{ issue.project }}</td>
+                        <td><span class="badge-status category-{{ issue.category.name|slugify_badge }}">{{ issue.category.name|default:"-" }}</span></td>
+                        <td><span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span></td>
+                        <td style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.module|default:"-" }}</td>
+                        <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.task_name }}</td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.description|default:"-" }}</td>
+                        <td>
+                            {% if issue.attachments %}
+                            <a href="{{ issue.attachments.url }}" target="_blank" onclick="event.stopPropagation();" style="font-size:12px; color:#0052cc;">
+                                <i class="bi bi-paperclip"></i> View
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>{{ issue.reported_by }}</td>
+                        <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
+                        <td>{{ issue.assigned_to.name|default:"-" }}</td>
+                        <td>{{ issue.allocated_time }}</td>
+                        <td style="white-space:nowrap;">{{ issue.approx_delivery }}</td>
+                        <td><span class="badge-status status-{{ issue.status.name|slugify_badge }}">{{ issue.status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
+                        <td>
+                            {% if issue.qa_by.all %}
+                                {% for member in issue.qa_by.all %}
+                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
+                                {% endfor %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.qa_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">
+                            {% if issue.delivery_status %}
+                            <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">{{ issue.delivery_status.name }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="width:1px; padding:0; border:none;"></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="21" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            No issues found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <!-- STICKY SCROLLBAR -->
 <div class="sticky-scrollbar-wrapper" id="stickyScrollbarWrapper">
     <div class="sticky-scrollbar-inner" id="stickyScrollbarInner"></div>
 </div>
 
 <script>
-    const tableScroll   = document.querySelector('.table-scroll-hidden');
+    function switchTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+
+        // Remove active from all tab buttons
+        document.querySelectorAll('.issue-tab').forEach(el => el.classList.remove('active'));
+
+        // Show selected tab
+        document.getElementById('tab-' + tabName).style.display = 'block';
+
+        // Set active button
+        document.getElementById('tab-btn-' + tabName).classList.add('active');
+
+        // Save to localStorage
+        localStorage.setItem('activeTab', tabName);
+
+        updateStickyScrollbar();
+        handleVisibility();
+    }
+
+    // Restore last active tab on page load
+    window.addEventListener('load', function () {
+        const savedTab = localStorage.getItem('activeTab') || 'all';
+        switchTab(savedTab);
+    });
+
+    // STICKY SCROLLBAR
+    function getActiveScroll() {
+        return document.querySelector('.tab-content:not([style*="display: none"]) .table-scroll-hidden');
+    }
+
     const stickyWrapper = document.getElementById('stickyScrollbarWrapper');
     const stickyInner   = document.getElementById('stickyScrollbarInner');
 
     function updateStickyScrollbar() {
-        stickyInner.style.width = tableScroll.scrollWidth + 'px';
+        const active = getActiveScroll();
+        if (active) stickyInner.style.width = active.scrollWidth + 'px';
     }
 
     stickyWrapper.addEventListener('scroll', function () {
-        tableScroll.scrollLeft = stickyWrapper.scrollLeft;
+        const active = getActiveScroll();
+        if (active) active.scrollLeft = stickyWrapper.scrollLeft;
     });
 
-    tableScroll.addEventListener('scroll', function () {
-        stickyWrapper.scrollLeft = tableScroll.scrollLeft;
+    document.querySelectorAll('.table-scroll-hidden').forEach(function(el) {
+        el.addEventListener('scroll', function () {
+            stickyWrapper.scrollLeft = this.scrollLeft;
+        });
     });
 
     function handleVisibility() {
-        const tableRect   = tableScroll.getBoundingClientRect();
+        const active = getActiveScroll();
+        if (!active) return;
+
+        const tableRect   = active.getBoundingClientRect();
         const tableTop    = tableRect.top;
         const tableBottom = tableRect.bottom;
         const winHeight   = window.innerHeight;
