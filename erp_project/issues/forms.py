@@ -35,7 +35,7 @@ class IssueForm(forms.ModelForm):
         self.fields['reported_date'].widget.attrs['min'] = today
         self.fields['qa_by'].queryset = QAMember.objects.all()
         if not self.instance.pk:
-            self.fields['reported_date'].initial          = datetime.date.today()
+            self.fields['reported_date'].initial               = datetime.date.today()
             self.fields['approx_delivery'].widget.attrs['min'] = today
             self.fields['completion_date'].widget.attrs['min'] = today
         else:
@@ -47,6 +47,35 @@ class IssueForm(forms.ModelForm):
             else:
                 self.fields['approx_delivery'].widget.attrs['min'] = today
                 self.fields['completion_date'].widget.attrs['min'] = today
+
+    def clean(self):
+        cleaned_data    = super().clean()
+        status          = cleaned_data.get('status')
+        qa_status       = cleaned_data.get('qa_status')
+        delivery_status = cleaned_data.get('delivery_status')
+        assigned_to     = cleaned_data.get('assigned_to')
+
+        # If assigned, status cannot be blank
+        if assigned_to and not status:
+            self.add_error('status', 'Development Status is required when issue is assigned.')
+
+        # If Dev Status = Completed, QA Status cannot be blank
+        if status and status.name == 'Completed' and not qa_status:
+            self.add_error('qa_status', 'QA Status is required when Development Status is Completed.')
+
+        # Delivery Status can only be set when Dev=Completed and QA=Approved
+        if delivery_status:
+            if not (status and status.name == 'Completed' and
+                    qa_status and qa_status.name == 'Approved'):
+                self.add_error('delivery_status', 'Delivery Status can only be set when Development Status is Completed and QA Status is Approved.')
+
+        # If Dev=Completed and QA=Approved, Delivery Status cannot be blank
+        if (status and status.name == 'Completed' and
+                qa_status and qa_status.name == 'Approved' and
+                not delivery_status):
+            self.add_error('delivery_status', 'Delivery Status is required when Development Status is Completed and QA Status is Approved.')
+
+        return cleaned_data
 
 
 class CategoryForm(forms.ModelForm):

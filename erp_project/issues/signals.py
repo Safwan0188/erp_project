@@ -29,8 +29,8 @@ def apply_auto_conditions(sender, instance, **kwargs):
     old_qa       = getattr(instance, '_old_qa_status', None)
 
     try:
-        status_open     = Status.objects.get(name='Open')
-        status_reopened = Status.objects.get(name='Reopened')
+        status_open      = Status.objects.get(name='Open')
+        status_reopened  = Status.objects.get(name='Reopened')
     except Status.DoesNotExist:
         status_open     = None
         status_reopened = None
@@ -45,37 +45,51 @@ def apply_auto_conditions(sender, instance, **kwargs):
     except DeliveryStatus.DoesNotExist:
         delivery_undelivered = None
 
-    # 1. Issue assigned to developer → Development Status = Open
-    if instance.assigned_to and not old_assigned:
+    # 1. New assignment or reassignment → Dev Status = Open
+    if instance.assigned_to and (
+        not old_assigned or instance.assigned_to != old_assigned
+    ):
         if status_open:
             instance.status = status_open
 
-    # 2. Development Status = Completed → QA Status = Open
+    # 2. Dev Status = Completed → QA Status = Open
     if (instance.status and
-            (old_status is None or instance.status != old_status) and
-            instance.status.name == 'Completed'):
+            instance.status.name == 'Completed' and
+            (old_status is None or old_status.name != 'Completed')):
         if qa_open:
             instance.qa_status = qa_open
 
-    # 3. QA Status = Approved → Delivery Status = Undelivered
+    # 3. QA Status = Rejected → Dev Status = Reopened
     if (instance.qa_status and
-            (old_qa is None or instance.qa_status != old_qa) and
-            instance.qa_status.name == 'Approved'):
+            instance.qa_status.name == 'Rejected' and
+            (old_qa is None or old_qa.name != 'Rejected')):
+        if status_reopened:
+            instance.status = status_reopened
+
+    # 6. Dev Status changed from Reopened to In Progress or On Hold → QA Status = blank
+    if (instance.status and old_status and
+            old_status.name == 'Reopened' and
+            instance.status.name in ['In Progress', 'On Hold']):
+        instance.qa_status = None
+
+    # 4. Dev Status = Completed AND QA Status = Approved
+    #    → Delivery Status = Undelivered (only if not already set)
+    if (instance.status and instance.qa_status and
+            instance.status.name == 'Completed' and
+            instance.qa_status.name == 'Approved' and
+            not instance.delivery_status):
         if delivery_undelivered:
             instance.delivery_status = delivery_undelivered
 
-    # 4. QA Status = Rejected → Development Status = Reopened
-    if (instance.qa_status and
-            (old_qa is None or instance.qa_status != old_qa) and
-            instance.qa_status.name == 'Rejected'):
-        if status_reopened:
-            instance.status = status_reopened
+    # 5. If conditions not met — reset Delivery Status to blank
+    if not (instance.status and instance.status.name == 'Completed' and
+            instance.qa_status and instance.qa_status.name == 'Approved'):
+        instance.delivery_status = None
 
 
 @receiver(post_save, sender=Issue)
 def create_notifications(sender, instance, created, **kwargs):
 
-    # New Issue Created
     if created:
         if instance.assigned_to:
             Notification.objects.create(
@@ -95,7 +109,7 @@ def create_notifications(sender, instance, created, **kwargs):
         old_status   = getattr(instance, '_old_status', None)
         old_qa       = getattr(instance, '_old_qa_status', None)
 
-        # New Assignment (was unassigned before)
+        # New Assignment
         if (instance.assigned_to and not old_assigned):
             Notification.objects.create(
                 issue   = instance,
@@ -122,7 +136,7 @@ def create_notifications(sender, instance, created, **kwargs):
                 message = f"Issue #{instance.issue_id} '{instance.task_name}' has failed QA verification."
             )
 
-        # Issue Closure
+        # Issue Completion
         if (instance.status and old_status and
                 instance.status != old_status and
                 instance.status.name == 'Completed'):

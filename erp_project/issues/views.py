@@ -17,7 +17,7 @@ def issue_create(request):
 
 
 def issue_list(request):
-    issues = Issue.objects.all().order_by('-issue_id')
+    all_issues = Issue.objects.all().order_by('-issue_id')
 
     query           = request.GET.get('q', '')
     status          = request.GET.get('status', '')
@@ -28,8 +28,9 @@ def issue_list(request):
     date_from       = request.GET.get('date_from', '')
     date_to         = request.GET.get('date_to', '')
 
+    # Apply filters to base queryset
     if query:
-        issues = issues.filter(
+        all_issues = all_issues.filter(
             Q(issue_id__icontains=query)          |
             Q(project__icontains=query)           |
             Q(assigned_to__name__icontains=query) |
@@ -37,52 +38,56 @@ def issue_list(request):
             Q(task_name__icontains=query)         |
             Q(module__icontains=query)
         )
-
     if status:
-        issues = issues.filter(status__name=status)
+        all_issues = all_issues.filter(status__name=status)
     if category:
-        issues = issues.filter(category__name=category)
+        all_issues = all_issues.filter(category__name=category)
     if type_:
-        issues = issues.filter(type__name=type_)
+        all_issues = all_issues.filter(type__name=type_)
     if qa_status:
-        issues = issues.filter(qa_status__name=qa_status)
+        all_issues = all_issues.filter(qa_status__name=qa_status)
     if delivery_status:
-        issues = issues.filter(delivery_status__name=delivery_status)
+        all_issues = all_issues.filter(delivery_status__name=delivery_status)
     if date_from:
-        issues = issues.filter(approx_delivery__gte=date_from)
+        all_issues = all_issues.filter(approx_delivery__gte=date_from)
     if date_to:
-        issues = issues.filter(approx_delivery__lte=date_to)
+        all_issues = all_issues.filter(approx_delivery__lte=date_to)
 
-    return render(request, 'issues/issue_list.html', {
-    # existing context
-    'issues'               : issues,
-    'query'                : query,
-    'status'               : status,
-    'category'             : category,
-    'type'                 : type_,
-    'qa_status'            : qa_status,
-    'delivery_status'      : delivery_status,
-    'date_from'            : date_from,
-    'date_to'              : date_to,
-    'all_statuses'         : Status.objects.all(),
-    'all_categories'       : Category.objects.all(),
-    'all_types'            : IssueType.objects.all(),
-    'all_qa_statuses'      : QAStatus.objects.all(),
-    'all_delivery_statuses': DeliveryStatus.objects.all(),
-    # 4 tab sublists
-    'pending_issues'   : Issue.objects.filter(
+    # Apply same filters to sublists
+    pending_issues = all_issues.filter(
         Q(status__name__in=['Open', 'On Hold']) |
         Q(qa_status__name__in=['Open', 'On Hold'])
-    ).distinct().order_by('-issue_id'),
-    'inprogress_issues': Issue.objects.filter(
+    ).distinct()
+
+    inprogress_issues = all_issues.filter(
         Q(status__name='In Progress') |
         Q(qa_status__name='In Progress')
-    ).distinct().order_by('-issue_id'),
-    'completed_issues' : Issue.objects.filter(
-         Q(status__name='Completed') |
+    ).distinct()
+
+    completed_issues = all_issues.filter(
+        Q(status__name='Completed') |
         Q(qa_status__name__in=['Approved', 'Rejected'])
-    ).distinct().order_by('-issue_id'),
-})
+    ).distinct()
+
+    return render(request, 'issues/issue_list.html', {
+        'issues'               : all_issues,
+        'query'                : query,
+        'status'               : status,
+        'category'             : category,
+        'type'                 : type_,
+        'qa_status'            : qa_status,
+        'delivery_status'      : delivery_status,
+        'date_from'            : date_from,
+        'date_to'              : date_to,
+        'all_statuses'         : Status.objects.all(),
+        'all_categories'       : Category.objects.all(),
+        'all_types'            : IssueType.objects.all(),
+        'all_qa_statuses'      : QAStatus.objects.all(),
+        'all_delivery_statuses': DeliveryStatus.objects.all(),
+        'pending_issues'       : pending_issues,
+        'inprogress_issues'    : inprogress_issues,
+        'completed_issues'     : completed_issues,
+    })
 
 def issue_edit(request, pk):
     issue = get_object_or_404(Issue, pk=pk)

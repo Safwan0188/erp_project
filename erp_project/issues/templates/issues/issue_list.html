@@ -449,76 +449,71 @@
 </div>
 
 <script>
-    function switchTab(tabName) {
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    let activeTableEl = document.querySelector('#tab-all .table-scroll-hidden');
 
-        // Remove active from all tab buttons
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.issue-tab').forEach(el => el.classList.remove('active'));
 
-        // Show selected tab
         document.getElementById('tab-' + tabName).style.display = 'block';
-
-        // Set active button
         document.getElementById('tab-btn-' + tabName).classList.add('active');
 
-        // Save to localStorage
+        activeTableEl = document.querySelector('#tab-' + tabName + ' .table-scroll-hidden');
+
         localStorage.setItem('activeTab', tabName);
 
         updateStickyScrollbar();
         handleVisibility();
     }
 
-    // Restore last active tab on page load
     window.addEventListener('load', function () {
         const savedTab = localStorage.getItem('activeTab') || 'all';
         switchTab(savedTab);
     });
 
-    // STICKY SCROLLBAR
-    function getActiveScroll() {
-        return document.querySelector('.tab-content:not([style*="display: none"]) .table-scroll-hidden');
-    }
-
     const stickyWrapper = document.getElementById('stickyScrollbarWrapper');
     const stickyInner   = document.getElementById('stickyScrollbarInner');
 
     function updateStickyScrollbar() {
-        const active = getActiveScroll();
-        if (active) stickyInner.style.width = active.scrollWidth + 'px';
+        if (activeTableEl) {
+            stickyInner.style.width = activeTableEl.scrollWidth + 'px';
+        }
     }
 
     stickyWrapper.addEventListener('scroll', function () {
-        const active = getActiveScroll();
-        if (active) active.scrollLeft = stickyWrapper.scrollLeft;
+        if (activeTableEl) activeTableEl.scrollLeft = stickyWrapper.scrollLeft;
     });
 
     document.querySelectorAll('.table-scroll-hidden').forEach(function(el) {
         el.addEventListener('scroll', function () {
-            stickyWrapper.scrollLeft = this.scrollLeft;
+            if (activeTableEl === this) {
+                stickyWrapper.scrollLeft = this.scrollLeft;
+            }
         });
     });
 
     function handleVisibility() {
-        const active = getActiveScroll();
-        if (!active) return;
+        if (!activeTableEl) {
+            stickyWrapper.style.display = 'none';
+            return;
+        }
 
-        const tableRect   = active.getBoundingClientRect();
+        const tableRect   = activeTableEl.getBoundingClientRect();
         const tableTop    = tableRect.top;
         const tableBottom = tableRect.bottom;
         const winHeight   = window.innerHeight;
         const tableLeft   = tableRect.left;
         const tableWidth  = tableRect.width;
 
-        if (tableBottom < 0) {
+        if (tableBottom < 0 || tableTop > winHeight) {
             stickyWrapper.style.display = 'none';
             return;
         }
 
         if (tableTop < winHeight && tableBottom > 0) {
-            stickyWrapper.style.display = 'block';
-            stickyWrapper.style.width   = tableWidth + 'px';
-            stickyWrapper.style.left    = tableLeft + 'px';
+            stickyWrapper.style.display  = 'block';
+            stickyWrapper.style.width    = tableWidth + 'px';
+            stickyWrapper.style.left     = tableLeft + 'px';
 
             if (tableBottom > winHeight) {
                 stickyWrapper.style.position = 'fixed';

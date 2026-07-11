@@ -123,7 +123,7 @@
                 <label class="form-label">QA By</label>
                 <ul class="qa-checkbox-list">
                     {{ form.qa_by }}
-                 </ul>
+                </ul>
             </div>
             <div class="col-md-4">
                 <label class="form-label">QA Status</label>
@@ -135,11 +135,13 @@
             </div>
         </div>
 
-        <div class="section-divider">Delivery</div>
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label class="form-label">Delivery Status</label>
-                {{ form.delivery_status }}
+        <div id="delivery-status-div">
+            <div class="section-divider">Delivery</div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Delivery Status</label>
+                    {{ form.delivery_status }}
+                </div>
             </div>
         </div>
 
@@ -154,29 +156,28 @@
 </div>
 
 <script>
-    const categoryAllocatedMap = {
-        'Critical' : '3 - 12 Hours',
-        'High'     : '1 - 5 Days',
-        'Medium'   : '2 - 7 Days',
-        'Regular'  : '3 - 15 Days',
-    };
+    const categorySelect  = document.getElementById('id_category');
+    const allocatedInput  = document.getElementById('id_allocated_time');
+    const reportedDateInput = document.getElementById('id_reported_date');
+    const approxDelivery  = document.getElementById('id_approx_delivery');
+    const completionDate  = document.getElementById('id_completion_date');
+    const statusSelect    = document.getElementById('id_status');
+    const qaStatusSelect  = document.getElementById('id_qa_status');
+    const deliverySelect  = document.getElementById('id_delivery_status');
 
-    const categorySelect = document.getElementById('id_category');
-    const allocatedInput = document.getElementById('id_allocated_time');
-
+    // CATEGORY → ALLOCATED TIME
     categorySelect.addEventListener('change', function () {
+        const categoryAllocatedMap = {
+            'Critical' : '3 - 12 Hours',
+            'High'     : '1 - 5 Days',
+            'Medium'   : '2 - 7 Days',
+            'Regular'  : '3 - 15 Days',
+        };
         const selectedText = this.options[this.selectedIndex].text.trim();
-        if (categoryAllocatedMap[selectedText]) {
-            allocatedInput.value = categoryAllocatedMap[selectedText];
-        } else {
-            allocatedInput.value = '';
-        }
+        allocatedInput.value = categoryAllocatedMap[selectedText] || '';
     });
 
-    const reportedDateInput = document.getElementById('id_reported_date');
-    const approxDelivery    = document.getElementById('id_approx_delivery');
-    const completionDate    = document.getElementById('id_completion_date');
-
+    // REPORTED DATE → MIN DATES
     function updateMinDates() {
         const reportedVal = reportedDateInput.value;
         if (reportedVal) {
@@ -193,6 +194,78 @@
 
     reportedDateInput.addEventListener('change', updateMinDates);
     updateMinDates();
+
+    // HELPER — set a select by option text
+    function setSelectByText(selectEl, text) {
+        Array.from(selectEl.options).forEach(function(opt) {
+            if (opt.text.trim() === text) {
+                selectEl.value = opt.value;
+            }
+        });
+    }
+
+    // HELPER — set a select to blank
+    function clearSelect(selectEl) {
+        selectEl.selectedIndex = 0;
+    }
+
+    // STORE previous status value
+    statusSelect.dataset.prevValue = statusSelect.options[statusSelect.selectedIndex].text.trim();
+
+    // DEV STATUS CHANGE
+    statusSelect.addEventListener('change', function () {
+        const statusText = this.options[this.selectedIndex].text.trim();
+        const prevStatus = this.dataset.prevValue || '';
+
+        // Dev = Completed → QA Status = Open
+        if (statusText === 'Completed') {
+            setSelectByText(qaStatusSelect, 'Open');
+            clearSelect(deliverySelect);
+        }
+
+        // Dev changed from Reopened to In Progress or On Hold → QA Status = blank
+        if (prevStatus === 'Reopened' && (statusText === 'In Progress' || statusText === 'On Hold')) {
+            clearSelect(qaStatusSelect);
+        }
+
+        // Update delivery status based on new combo
+        checkDeliveryStatus();
+
+        this.dataset.prevValue = statusText;
+    });
+
+    // QA STATUS CHANGE
+    qaStatusSelect.addEventListener('change', function () {
+        const qaText = this.options[this.selectedIndex].text.trim();
+
+        // QA = Rejected → Dev Status = Reopened
+        if (qaText === 'Rejected') {
+            setSelectByText(statusSelect, 'Reopened');
+            statusSelect.dataset.prevValue = 'Reopened';
+            clearSelect(deliverySelect);
+        }
+
+        // QA = Approved + Dev = Completed → Delivery = Undelivered
+        checkDeliveryStatus();
+    });
+
+    // CHECK DELIVERY STATUS
+    function checkDeliveryStatus() {
+        const statusText   = statusSelect.options[statusSelect.selectedIndex].text.trim();
+        const qaStatusText = qaStatusSelect.options[qaStatusSelect.selectedIndex].text.trim();
+
+        if (statusText === 'Completed' && qaStatusText === 'Approved') {
+            // Auto set to Undelivered only if currently blank
+            if (deliverySelect.selectedIndex === 0) {
+                setSelectByText(deliverySelect, 'Undelivered');
+            }
+        } else {
+            clearSelect(deliverySelect);
+        }
+    }
+
+    // RUN ON PAGE LOAD
+    checkDeliveryStatus();
 </script>
 
 {% endblock %}
