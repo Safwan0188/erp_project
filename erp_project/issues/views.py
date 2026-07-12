@@ -28,15 +28,14 @@ def issue_list(request):
     date_from       = request.GET.get('date_from', '')
     date_to         = request.GET.get('date_to', '')
 
-    # Apply filters to base queryset
     if query:
         all_issues = all_issues.filter(
             Q(issue_id__icontains=query)          |
             Q(project__icontains=query)           |
-            Q(assigned_to__name__icontains=query) |
-            Q(reported_by__icontains=query)       |
+            Q(module__icontains=query)            |
             Q(task_name__icontains=query)         |
-            Q(module__icontains=query)
+            Q(reported_by__icontains=query)       |
+            Q(assigned_to__name__icontains=query)
         )
     if status:
         all_issues = all_issues.filter(status__name=status)
@@ -53,7 +52,6 @@ def issue_list(request):
     if date_to:
         all_issues = all_issues.filter(approx_delivery__lte=date_to)
 
-    # Apply same filters to sublists
     pending_issues = all_issues.filter(
         Q(status__name__in=['Open', 'On Hold']) |
         Q(qa_status__name__in=['Open', 'On Hold'])
@@ -68,6 +66,10 @@ def issue_list(request):
         Q(status__name='Completed') |
         Q(qa_status__name__in=['Approved', 'Rejected'])
     ).distinct()
+
+    delivered_issues = all_issues.filter(
+        delivery_status__name='Delivered'
+    ).order_by('-issue_id')
 
     return render(request, 'issues/issue_list.html', {
         'issues'               : all_issues,
@@ -87,7 +89,9 @@ def issue_list(request):
         'pending_issues'       : pending_issues,
         'inprogress_issues'    : inprogress_issues,
         'completed_issues'     : completed_issues,
+        'delivered_issues'     : delivered_issues,
     })
+
 
 def issue_edit(request, pk):
     issue = get_object_or_404(Issue, pk=pk)

@@ -89,7 +89,12 @@ class Notification(models.Model):
         ('upcoming_delivery', 'Upcoming Delivery'),
         ('overdue',           'Overdue'),
         ('qa_rejection',      'QA Rejection'),
-        ('closure',           'Issue Closure'),
+        ('qa_approval',       'QA Approval'),
+        ('closure',           'Issue Completed'),
+        ('reopened',          'Issue Reopened'),
+        ('dev_comment',       'Developer Comment'),
+        ('qa_comment',        'QA Comment'),
+        ('delivered',         'Issue Delivered'),
     ]
 
     issue      = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='notifications')

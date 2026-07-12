@@ -31,8 +31,18 @@
                         <i class="bi bi-exclamation-triangle"></i>
                     {% elif notif.type == "qa_rejection" %}
                         <i class="bi bi-x-circle"></i>
+                    {% elif notif.type == "qa_approval" %}
+                        <i class="bi bi-patch-check"></i>
                     {% elif notif.type == "closure" %}
                         <i class="bi bi-check-circle"></i>
+                    {% elif notif.type == "reopened" %}
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    {% elif notif.type == "dev_comment" %}
+                        <i class="bi bi-chat-left-text"></i>
+                    {% elif notif.type == "qa_comment" %}
+                        <i class="bi bi-chat-left-dots"></i>
+                    {% elif notif.type == "delivered" %}
+                        <i class="bi bi-truck"></i>
                     {% endif %}
                 </div>
 

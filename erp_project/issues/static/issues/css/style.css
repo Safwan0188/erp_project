@@ -624,6 +624,31 @@ body {
     color: #006644;
 }
 
+.notif-qa_approval {
+    background: #e3fcef;
+    color: #006644;
+}
+
+.notif-reopened {
+    background: #ffebe6;
+    color: #bf2600;
+}
+
+.notif-dev_comment {
+    background: #deebff;
+    color: #0052cc;
+}
+
+.notif-qa_comment {
+    background: #eae6ff;
+    color: #403294;
+}
+
+.notif-delivered {
+    background: #e3fcef;
+    color: #006644;
+}
+
 .erp-card ul li a:hover {
     background-color: #f4f5f7;
     border-radius: 6px;

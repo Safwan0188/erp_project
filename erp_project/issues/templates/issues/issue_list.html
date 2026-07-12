@@ -101,6 +101,9 @@
     <button class="issue-tab" id="tab-btn-completed" onclick="switchTab('completed')">
         <i class="bi bi-check-circle"></i> Completed
     </button>
+    <button class="issue-tab" id="tab-btn-delivered" onclick="switchTab('delivered')">
+        <i class="bi bi-truck"></i> Delivered
+    </button>
 </div>
 
 <!-- ALL ISSUES -->
@@ -434,6 +437,91 @@
                         <td colspan="21" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                             No issues found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- DELIVERED -->
+<div class="tab-content" id="tab-delivered" style="display:none;">
+    <div class="erp-card" style="padding:0;">
+        <div class="table-scroll-hidden">
+            <table class="table erp-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="min-width:80px;">Issue ID</th>
+                        <th style="min-width:130px;">Project</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Module</th>
+                        <th>Task Name</th>
+                        <th>Description</th>
+                        <th>Attachments</th>
+                        <th>Reported By</th>
+                        <th>Reported Date</th>
+                        <th>Assigned To</th>
+                        <th>Allocated Time</th>
+                        <th>Approx. Delivery</th>
+                        <th>Development Status</th>
+                        <th>Developer Comments</th>
+                        <th>Completion Date</th>
+                        <th>QA By</th>
+                        <th>QA Status</th>
+                        <th>QA Comments</th>
+                        <th>Delivery Status</th>
+                        <th style="width:1px; padding:0; border:none;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in delivered_issues %}
+                    <tr style="cursor:pointer;" onclick="window.location='{% url 'issue_detail' issue.issue_id %}'">
+                        <td style="min-width:80px;"><span class="issue-id">#{{ issue.issue_id }}</span></td>
+                        <td style="min-width:130px;">{{ issue.project }}</td>
+                        <td><span class="badge-status category-{{ issue.category.name|slugify_badge }}">{{ issue.category.name|default:"-" }}</span></td>
+                        <td><span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span></td>
+                        <td style="max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.module|default:"-" }}</td>
+                        <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.task_name }}</td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.description|default:"-" }}</td>
+                        <td>
+                            {% if issue.attachments %}
+                            <a href="{{ issue.attachments.url }}" target="_blank" onclick="event.stopPropagation();" style="font-size:12px; color:#0052cc;">
+                                <i class="bi bi-paperclip"></i> View
+                            </a>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>{{ issue.reported_by }}</td>
+                        <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
+                        <td>{{ issue.assigned_to.name|default:"-" }}</td>
+                        <td>{{ issue.allocated_time }}</td>
+                        <td style="white-space:nowrap;">{{ issue.approx_delivery }}</td>
+                        <td><span class="badge-status status-{{ issue.status.name|slugify_badge }}">{{ issue.status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
+                        <td>
+                            {% if issue.qa_by.all %}
+                                {% for member in issue.qa_by.all %}
+                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
+                                {% endfor %}
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
+                        <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.qa_comments|default:"-" }}</td>
+                        <td style="white-space:nowrap;">
+                            {% if issue.delivery_status %}
+                            <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">{{ issue.delivery_status.name }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td style="width:1px; padding:0; border:none;"></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="21" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            No delivered issues yet.
                         </td>
                     </tr>
                     {% endfor %}
