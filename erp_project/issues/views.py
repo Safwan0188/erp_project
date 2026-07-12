@@ -120,7 +120,14 @@ def issue_detail(request, pk):
 
 def dashboard(request):
     today  = timezone.now().date()
-    issues = Issue.objects.all()
+    
+    # All issues for delivery summary
+    all_issues = Issue.objects.all()
+    
+    # Active issues — exclude delivered and undelivered
+    issues = Issue.objects.exclude(
+        delivery_status__name__in=['Delivered', 'Undelivered']
+    )
 
     # 11.1 Issue Summary by Category
     total    = issues.count()
@@ -136,14 +143,14 @@ def dashboard(request):
     completed   = issues.filter(status__name='Completed').count()
     reopened    = issues.filter(status__name='Reopened').count()
 
-    # 11.3 Delivery Summary
-    delivered   = issues.filter(delivery_status__name='Delivered').count()
-    undelivered = issues.filter(delivery_status__name='Undelivered').count()
-    on_track    = issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__gte=today).count()
-    delayed     = issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__lt=today).count()
+    # 11.3 Delivery Summary — uses all_issues
+    delivered   = all_issues.filter(delivery_status__name='Delivered').count()
+    undelivered = all_issues.filter(delivery_status__name='Undelivered').count()
+    on_track    = all_issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__gte=today).count()
+    delayed     = all_issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__lt=today).count()
 
-    # 11.4 Developer Performance
-    developers = issues.exclude(assigned_to__isnull=True).values('assigned_to__name').annotate(
+    # 11.4 Developer Performance — uses all issues
+    developers = all_issues.exclude(assigned_to__isnull=True).values('assigned_to__name').annotate(
         total_assigned = Count('issue_id'),
         completed      = Count('issue_id', filter=Q(status__name='Completed')),
         in_progress    = Count('issue_id', filter=Q(status__name='In Progress')),
@@ -165,7 +172,7 @@ def dashboard(request):
         'on_hold'     : on_hold,
         'completed'   : completed,
         'reopened'    : reopened,
-        'total_tasks' : total,
+        'total_tasks' : all_issues.count(),
         'delivered'   : delivered,
         'undelivered' : undelivered,
         'on_track'    : on_track,
