@@ -14,7 +14,7 @@ class Command(BaseCommand):
             target_date = today + timezone.timedelta(days=days)
             upcoming = Issue.objects.filter(
                 approx_delivery=target_date
-            ).exclude(status__name='Closed')
+            ).exclude(delivery_status__name='Delivered')
 
             for issue in upcoming:
                 already_exists = Notification.objects.filter(
@@ -27,13 +27,13 @@ class Command(BaseCommand):
                     Notification.objects.create(
                         issue   = issue,
                         type    = 'upcoming_delivery',
-                        message = f"Issue #{issue.issue_id} '{issue.summary}' is due in {days} day{'s' if days > 1 else ''}."
+                        message = f"Issue #{issue.issue_id} '{issue.task_name}' is due in {days} day{'s' if days > 1 else ''}."
                     )
 
         # Overdue issues
         overdue = Issue.objects.filter(
             approx_delivery__lt=today
-        ).exclude(status__name='Closed')
+        ).exclude(delivery_status__name='Delivered')
 
         for issue in overdue:
             already_exists = Notification.objects.filter(
@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 Notification.objects.create(
                     issue   = issue,
                     type    = 'overdue',
-                    message = f"Issue #{issue.issue_id} '{issue.summary}' is overdue! Delivery was {issue.approx_delivery}."
+                    message = f"Issue #{issue.issue_id} '{issue.task_name}' is overdue! Delivery was {issue.approx_delivery}."
                 )
 
         self.stdout.write(self.style.SUCCESS('Notifications checked successfully!'))
