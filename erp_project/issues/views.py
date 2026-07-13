@@ -143,11 +143,15 @@ def dashboard(request):
     completed   = issues.filter(status__name='Completed').count()
     reopened    = issues.filter(status__name='Reopened').count()
 
-    # 11.3 Delivery Summary — uses all_issues
+    # 11.3 Delivery Summary
     delivered   = all_issues.filter(delivery_status__name='Delivered').count()
     undelivered = all_issues.filter(delivery_status__name='Undelivered').count()
-    on_track    = all_issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__gte=today).count()
-    delayed     = all_issues.exclude(delivery_status__name='Delivered').filter(approx_delivery__lt=today).count()
+    on_track    = all_issues.exclude(
+        delivery_status__name__in=['Delivered', 'Undelivered']
+    ).filter(approx_delivery__gte=today).count()
+    delayed     = all_issues.exclude(
+        delivery_status__name__in=['Delivered', 'Undelivered']
+    ).filter(approx_delivery__lt=today).count()
 
     # 11.4 Developer Performance — uses all issues
     developers = all_issues.exclude(assigned_to__isnull=True).values('assigned_to__name').annotate(
