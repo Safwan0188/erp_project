@@ -157,6 +157,7 @@
 
 <script>
     const categorySelect  = document.getElementById('id_category');
+    const assignedToSelect = document.getElementById('id_assigned_to');
     const allocatedInput  = document.getElementById('id_allocated_time');
     const reportedDateInput = document.getElementById('id_reported_date');
     const approxDelivery  = document.getElementById('id_approx_delivery');
@@ -211,6 +212,17 @@
 
     // STORE previous status value
     statusSelect.dataset.prevValue = statusSelect.options[statusSelect.selectedIndex].text.trim();
+
+    // ASSIGNED TO CHANGE
+    assignedToSelect.addEventListener('change', function () {
+        const isAssigned = this.value !== '' && this.value !== null;
+
+        if (isAssigned) {
+            setSelectByText(statusSelect, 'Open');
+            statusSelect.dataset.prevValue = 'Open';
+            checkDeliveryStatus();
+        }
+    });
 
     // DEV STATUS CHANGE
     statusSelect.addEventListener('change', function () {
