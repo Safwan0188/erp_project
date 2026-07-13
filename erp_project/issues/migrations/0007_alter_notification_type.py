@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='notification',
             name='type',
-            field=models.CharField(choices=[('new_assignment', 'New Assignment'), ('reassignment', 'Reassignment'), ('upcoming_delivery', 'Upcoming Delivery'), ('overdue', 'Overdue'), ('qa_rejection', 'QA Rejection'), ('qa_approval', 'QA Approval'), ('closure', 'Issue Completed'), ('reopened', 'Issue Reopened'), ('dev_comment', 'Developer Comment'), ('qa_comment', 'QA Comment'), ('delivered', 'Issue Delivered')], max_length=50),
+            field=models.CharField(choices=[('new_assignment', 'New Assignment'), ('reassignment', 'Reassignment'), ('upcoming_delivery', 'Upcoming Delivery'), ('overdue', 'Overdue'), ('qa_rejection', 'QA Rejection'), ('qa_approval', 'QA Approval'), ('completed', 'Issue Completed'), ('reopened', 'Issue Reopened'), ('dev_comment', 'Developer Comment'), ('qa_comment', 'QA Comment'), ('delivered', 'Issue Delivered')], max_length=50),
         ),
     ]

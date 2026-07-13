@@ -90,7 +90,7 @@ class Notification(models.Model):
         ('overdue',           'Overdue'),
         ('qa_rejection',      'QA Rejection'),
         ('qa_approval',       'QA Approval'),
-        ('closure',           'Issue Completed'),
+        ('completed',           'Issue Completed'),
         ('reopened',          'Issue Reopened'),
         ('dev_comment',       'Developer Comment'),
         ('qa_comment',        'QA Comment'),

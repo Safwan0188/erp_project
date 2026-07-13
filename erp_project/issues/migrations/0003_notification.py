@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='Notification',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', models.CharField(choices=[('new_assignment', 'New Assignment'), ('reassignment', 'Reassignment'), ('upcoming_delivery', 'Upcoming Delivery'), ('overdue', 'Overdue'), ('qa_rejection', 'QA Rejection'), ('closure', 'Issue Closure')], max_length=50)),
+                ('type', models.CharField(choices=[('new_assignment', 'New Assignment'), ('reassignment', 'Reassignment'), ('upcoming_delivery', 'Upcoming Delivery'), ('overdue', 'Overdue'), ('qa_rejection', 'QA Rejection'), ('completed', 'Issue Completed')], max_length=50)),
                 ('message', models.TextField()),
                 ('is_read', models.BooleanField(default=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

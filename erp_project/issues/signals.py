@@ -144,7 +144,7 @@ def create_notifications(sender, instance, created, **kwargs):
             instance.status.name == 'Completed'):
         Notification.objects.create(
             issue   = instance,
-            type    = 'closure',
+            type    = 'completed',
             message = f"Issue #{instance.issue_id} '{instance.task_name}' has been completed by {instance.assigned_to.name if instance.assigned_to else 'developer'}."
         )
 
