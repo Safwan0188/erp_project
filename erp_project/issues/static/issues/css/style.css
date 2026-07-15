@@ -468,6 +468,17 @@ body {
     justify-content: center;
 }
 
+.issue-project {
+    display: inline-block;
+    background: #deebff;
+    color: #0052cc;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
 /* DASHBOARD PANELS */
 .dash-panels {
     display: flex;

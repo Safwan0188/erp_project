@@ -10,7 +10,9 @@
         <p class="delete-subtext">This action is permanent and cannot be undone.</p>
 
         <div class="issue-ref">
-            <span class="issue-id">#{{ issue.issue_id }}</span> — {{ issue.summary }}
+            <span class="issue-id">#{{ issue.issue_id }}</span>
+            <span class="issue-project">{{ issue.project }}</span>
+            — {{ issue.task_name }}
         </div>
 
         <form method="POST">
