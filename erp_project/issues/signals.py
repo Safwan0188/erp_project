@@ -1,6 +1,33 @@
+import re
+from datetime import timedelta
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.utils import timezone
 from .models import Issue, Notification, Status, QAStatus, DeliveryStatus
+
+
+def _compute_approx_delivery(allocated_time_str):
+    """
+    Parse a free-text allocated_time value (e.g. '3 - 12 Hours', '1 - 5 Days')
+    and return today + the MAX value in that range as a date.
+    Hour-based ranges resolve to tomorrow's date (since approx_delivery is date-only).
+    Returns None if no number can be found in the text.
+    """
+    if not allocated_time_str:
+        return None
+
+    numbers = re.findall(r'\d+(?:\.\d+)?', allocated_time_str)
+    if not numbers:
+        return None
+
+    max_value = max(float(n) for n in numbers)
+    text_lower = allocated_time_str.lower()
+
+    if 'hour' in text_lower or 'hr' in text_lower:
+        return timezone.localdate() + timedelta(days=1)
+
+    # Default to days for anything else (days, weeks worth of digits, etc.)
+    return timezone.localdate() + timedelta(days=int(round(max_value)))
 
 
 @receiver(pre_save, sender=Issue)
@@ -68,6 +95,17 @@ def apply_auto_conditions(sender, instance, **kwargs):
         if qa_open:
             instance.qa_status = qa_open
 
+    # 2b. Dev Status = Completed → Completion Date = today (if not already set by this change)
+    if (instance.status and
+            instance.status.name == 'Completed' and
+            (old_status is None or old_status.name != 'Completed')):
+        instance.completion_date = timezone.localdate()
+
+    # 2c. Dev Status changed away from Completed → Completion Date = blank
+    if (old_status and old_status.name == 'Completed' and
+            (not instance.status or instance.status.name != 'Completed')):
+        instance.completion_date = None
+
     # 3. QA Status = Rejected → Dev Status = Reopened
     if (instance.qa_status and
             instance.qa_status.name == 'Rejected' and
@@ -80,6 +118,15 @@ def apply_auto_conditions(sender, instance, **kwargs):
             old_status.name == 'Reopened' and
             instance.status.name in ['In Progress', 'On Hold']):
         instance.qa_status = None
+
+    # 4b. Dev Status → In Progress (transition) on a DEFAULT category → auto-compute Approx Delivery
+    if (instance.status and instance.status.name == 'In Progress' and
+            (old_status is None or old_status.name != 'In Progress') and
+            instance.category and instance.category.is_default and
+            instance.allocated_time):
+        computed_delivery = _compute_approx_delivery(instance.allocated_time)
+        if computed_delivery:
+            instance.approx_delivery = computed_delivery
 
     # 5. Dev = Completed AND QA = Approved → Delivery = Undelivered (if blank)
     if (instance.status and instance.qa_status and

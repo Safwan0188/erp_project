@@ -50,7 +50,7 @@
                 <label class="form-label">Module</label>
                 {{ form.module }}
             </div>
-            <div class="col-md-8">
+            <div class="col-md-4">
                 <label class="form-label">Task Name</label>
                 {{ form.task_name }}
             </div>
@@ -119,7 +119,7 @@
 
         <div class="section-divider">QA & Comments</div>
         <div class="row g-3 mb-4">
-            <div class="col-md-8">
+            <div class="col-md-4">
                 <label class="form-label">QA By</label>
                 <ul class="qa-checkbox-list">
                     {{ form.qa_by }}
@@ -167,16 +167,34 @@
     const deliverySelect  = document.getElementById('id_delivery_status');
 
     // CATEGORY → ALLOCATED TIME
+    const categoryAllocatedMap = {
+        'Critical' : '3 - 12 Hours',
+        'High'     : '1 - 5 Days',
+        'Medium'   : '2 - 7 Days',
+        'Regular'  : '3 - 15 Days',
+    };
+
     categorySelect.addEventListener('change', function () {
-        const categoryAllocatedMap = {
-            'Critical' : '3 - 12 Hours',
-            'High'     : '1 - 5 Days',
-            'Medium'   : '2 - 7 Days',
-            'Regular'  : '3 - 15 Days',
-        };
         const selectedText = this.options[this.selectedIndex].text.trim();
         allocatedInput.value = categoryAllocatedMap[selectedText] || '';
     });
+
+    // Parse allocated_time text and return today + max value as YYYY-MM-DD (hours → tomorrow)
+    function computeApproxDeliveryFromAllocated(allocatedStr) {
+        if (!allocatedStr) return null;
+        const numbers = allocatedStr.match(/\d+(\.\d+)?/g);
+        if (!numbers) return null;
+        const maxValue = Math.max(...numbers.map(Number));
+        const lower = allocatedStr.toLowerCase();
+        const result = new Date();
+
+        if (lower.includes('hour') || lower.includes('hr')) {
+            result.setDate(result.getDate() + 1);
+        } else {
+            result.setDate(result.getDate() + Math.round(maxValue));
+        }
+        return result.toISOString().split('T')[0];
+    }
 
     // REPORTED DATE → MIN DATES
     function updateMinDates() {
@@ -219,8 +237,7 @@
 
         if (isAssigned) {
             setSelectByText(statusSelect, 'Open');
-            statusSelect.dataset.prevValue = 'Open';
-            checkDeliveryStatus();
+            statusSelect.dispatchEvent(new Event('change'));
         }
     });
 
@@ -229,15 +246,33 @@
         const statusText = this.options[this.selectedIndex].text.trim();
         const prevStatus = this.dataset.prevValue || '';
 
-        // Dev = Completed → QA Status = Open
+        // Dev = Completed → QA Status = Open, Completion Date = today
         if (statusText === 'Completed') {
             setSelectByText(qaStatusSelect, 'Open');
             clearSelect(deliverySelect);
+            const today = new Date();
+            completionDate.value = today.toISOString().split('T')[0];
+        } else {
+            // Dev status changed to anything else → Completion Date = blank
+            completionDate.value = '';
         }
 
         // Dev changed from Reopened to In Progress or On Hold → QA Status = blank
         if (prevStatus === 'Reopened' && (statusText === 'In Progress' || statusText === 'On Hold')) {
             clearSelect(qaStatusSelect);
+        }
+
+        // Dev → In Progress (transition) on a DEFAULT category → auto-fill Approx Delivery
+        if (statusText === 'In Progress' && prevStatus !== 'In Progress') {
+            const categoryText = categorySelect.options[categorySelect.selectedIndex]
+                ? categorySelect.options[categorySelect.selectedIndex].text.trim()
+                : '';
+            if (categoryAllocatedMap.hasOwnProperty(categoryText) && allocatedInput.value) {
+                const computed = computeApproxDeliveryFromAllocated(allocatedInput.value);
+                if (computed) {
+                    approxDelivery.value = computed;
+                }
+            }
         }
 
         // Update delivery status based on new combo
@@ -253,7 +288,7 @@
         // QA = Rejected → Dev Status = Reopened
         if (qaText === 'Rejected') {
             setSelectByText(statusSelect, 'Reopened');
-            statusSelect.dataset.prevValue = 'Reopened';
+            statusSelect.dispatchEvent(new Event('change'));
             clearSelect(deliverySelect);
         }
 

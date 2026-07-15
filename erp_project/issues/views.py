@@ -224,6 +224,15 @@ def settings_page(request):
             if form.is_valid():
                 form.save()
 
+        elif form_type == 'category_time':
+            category_id = request.POST.get('category_id')
+            category    = get_object_or_404(Category, pk=category_id)
+            value       = request.POST.get('default_time_value') or None
+            unit        = request.POST.get('default_time_unit') or None
+            category.default_time_value = value
+            category.default_time_unit  = unit
+            category.save()
+
         elif form_type == 'delete':
             model_name = request.POST.get('model_name')
             obj_id     = request.POST.get('obj_id')

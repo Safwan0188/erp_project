@@ -10,7 +10,7 @@ class IssueForm(forms.ModelForm):
         widgets = {
             'reported_date'      : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'approx_delivery'    : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'completion_date'    : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'completion_date' : forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'readonly': 'readonly'}),
             'description'        : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'developer_comments' : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'qa_comments'        : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
