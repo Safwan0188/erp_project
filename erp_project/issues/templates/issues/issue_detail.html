@@ -5,12 +5,16 @@
 <div class="topbar">
     <h4><i class="bi bi-card-text me-2"></i>Issue #{{ issue.issue_id }}</h4>
     <div class="d-flex gap-2">
+        {% if can_edit %}
         <a href="{% url 'issue_edit' issue.issue_id %}" class="btn">
             <i class="bi bi-pencil"></i> Edit
         </a>
+        {% endif %}
+        {% if can_delete %}
         <a href="{% url 'issue_delete' issue.issue_id %}" class="btn" style="background:#bf2600;">
             <i class="bi bi-trash"></i> Delete
         </a>
+        {% endif %}
         <a href="{% url 'issue_list' %}" class="btn-outline">
             <i class="bi bi-arrow-left"></i> Back
         </a>

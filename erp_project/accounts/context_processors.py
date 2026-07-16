@@ -1,4 +1,4 @@
-from .models import AppUser
+from .utils import get_current_app_user
 
 
 def current_user(request):
@@ -12,13 +12,5 @@ def current_user(request):
     instead. Every view/template that reads `current_user` stays the
     same — only the lookup inside this function changes.
     """
-    app_user_id = request.session.get('app_user_id')
-    if not app_user_id:
-        return {'current_user': None}
-
-    try:
-        user = AppUser.objects.get(pk=app_user_id, is_active=True)
-    except AppUser.DoesNotExist:
-        user = None
-
-    return {'current_user': user}
+    user = get_current_app_user(request)
+    return {'current_user': user, 'current_role': user.role if user else None}

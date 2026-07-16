@@ -1,9 +1,10 @@
 import re
 from datetime import timedelta
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from .models import Issue, Notification, Status, QAStatus, DeliveryStatus
+from .models import Issue, Notification, Status, QAStatus, DeliveryStatus, Developer, IssueAssignmentHistory
+from accounts.models import AppUser
 
 
 def _compute_approx_delivery(allocated_time_str):
@@ -252,3 +253,103 @@ def create_notifications(sender, instance, created, **kwargs):
             type    = 'delivered',
             message = f"Issue #{instance.issue_id} '{instance.task_name}' has been delivered."
         )
+
+
+@receiver(post_save, sender=Issue)
+def track_assignment_history(sender, instance, created, **kwargs):
+    """
+    Maintains IssueAssignmentHistory so per-developer notification
+    filtering has a real "assigned since" timestamp to work with.
+    Runs on every save; only acts when assigned_to actually changed
+    (or on creation with an assignee already set).
+    """
+    old_assigned = getattr(instance, '_old_assigned_to', None)
+    new_assigned = instance.assigned_to
+
+    if created:
+        if new_assigned:
+            IssueAssignmentHistory.objects.create(issue=instance, developer=new_assigned)
+        return
+
+    if new_assigned == old_assigned:
+        return
+
+    # Close out the previous developer's open assignment window, if any.
+    if old_assigned:
+        IssueAssignmentHistory.objects.filter(
+            issue=instance, developer=old_assigned, unassigned_at__isnull=True
+        ).update(unassigned_at=timezone.now())
+
+    # Open a new window for the newly assigned developer.
+    if new_assigned:
+        IssueAssignmentHistory.objects.create(issue=instance, developer=new_assigned)
+
+
+@receiver(post_save, sender=AppUser)
+def sync_developer_from_appuser(sender, instance, created, **kwargs):
+    """
+    Keeps the Developer lookup table in sync with users holding the
+    Developer role. This is the role-driven replacement for manually
+    adding/removing developers in Settings.
+
+    - Role becomes/stays Developer (and user is_active) → ensure an
+      active Developer record exists, linked to this AppUser. If one
+      already exists (e.g. re-granted after revocation), reactivate it
+      rather than creating a duplicate, so history is preserved.
+    - Role changes away from Developer, or user is deactivated →
+      deactivate the linked Developer (is_active=False) if they still
+      have assigned issues, or delete it outright if they have none.
+    """
+    is_dev_now = instance.is_active and instance.role == 'developer'
+
+    try:
+        dev = Developer.objects.get(linked_user=instance)
+    except Developer.DoesNotExist:
+        dev = None
+
+    if is_dev_now:
+        if dev is None:
+            # Reuse a pre-existing unlinked record with the same name if present
+            # (covers the rare case where a Developer was created before linking existed).
+            dev, _ = Developer.objects.get_or_create(
+                linked_user=instance,
+                defaults={'name': instance.name, 'is_default': True, 'is_active': True}
+            )
+        else:
+            dev.name       = instance.name
+            dev.is_default = True
+            dev.is_active  = True
+            dev.save()
+    else:
+        if dev is not None:
+            has_assigned_issues = Issue.objects.filter(assigned_to=dev).exists()
+            if has_assigned_issues:
+                dev.is_active  = False
+                dev.is_default = False
+                dev.save()
+            else:
+                dev.delete()
+
+
+@receiver(post_delete, sender=AppUser)
+def deactivate_developer_on_appuser_delete(sender, instance, **kwargs):
+    """
+    If an AppUser is deleted outright (rather than deactivated) via Django
+    Admin, apply the same zero-issues-delete / else-deactivate rule.
+    linked_user will already be NULL on the Developer row by this point
+    (SET_NULL), so we match on the AppUser's name as a best-effort fallback
+    since this is a temporary, pre-API stand-in. This is one of the pieces
+    intended to be revisited once real user records replace AppUser.
+    """
+    try:
+        dev = Developer.objects.get(name=instance.name, linked_user__isnull=True)
+    except (Developer.DoesNotExist, Developer.MultipleObjectsReturned):
+        return
+
+    has_assigned_issues = Issue.objects.filter(assigned_to=dev).exists()
+    if has_assigned_issues:
+        dev.is_active  = False
+        dev.is_default = False
+        dev.save()
+    else:
+        dev.delete()

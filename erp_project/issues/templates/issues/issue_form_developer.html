@@ -1,0 +1,139 @@
+{% extends "issues/base.html" %}
+{% load issue_extras %}
+{% block nav_list %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4><i class="bi bi-pencil me-2"></i>Edit Issue #{{ issue.issue_id }}</h4>
+    <a href="{% url 'issue_detail' issue.issue_id %}" class="btn-outline">
+        <i class="bi bi-arrow-left"></i> Back to Issue
+    </a>
+</div>
+
+<div class="erp-card">
+
+    <div class="section-divider">Basic Information (read-only)</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="detail-label">Project</div>
+            <div class="detail-value">{{ issue.project }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Category</div>
+            <div class="detail-value">
+                <span class="badge-status category-{{ issue.category.name|slugify_badge }}">{{ issue.category.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Type</div>
+            <div class="detail-value">
+                <span class="badge-status type-{{ issue.type.name|slugify_badge }}">{{ issue.type.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Module</div>
+            <div class="detail-value">{{ issue.module|default:"-" }}</div>
+        </div>
+        <div class="col-md-8">
+            <div class="detail-label">Task Name</div>
+            <div class="detail-value">{{ issue.task_name }}</div>
+        </div>
+        <div class="col-12">
+            <div class="detail-label">Description</div>
+            <div class="detail-value">{{ issue.description|default:"-" }}</div>
+        </div>
+        {% if issue.attachments %}
+        <div class="col-12">
+            <div class="detail-label">Attachments</div>
+            <div class="detail-value">
+                <a href="{{ issue.attachments.url }}" target="_blank" class="btn-outline" style="padding:4px 12px; font-size:13px;">
+                    <i class="bi bi-paperclip"></i> {{ issue.attachments.name|slice:"12:" }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="section-divider">Reporting Details (read-only)</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="detail-label">Reported By</div>
+            <div class="detail-value">{{ issue.reported_by }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Reported Date</div>
+            <div class="detail-value">{{ issue.reported_date }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Assigned To</div>
+            <div class="detail-value">{{ issue.assigned_to.name|default:"-" }}</div>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger mb-4">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                {% for field in form %}
+                {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="section-divider">Your Editable Fields</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Allocated Time</label>
+                {{ form.allocated_time }}
+                <div class="form-text text-muted">e.g. 3 - 5 hrs or 10 - 12 days</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Approx. Delivery Date</label>
+                {{ form.approx_delivery }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Development Status</label>
+                {{ form.status }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Developer Comments</label>
+                {{ form.developer_comments }}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2">
+            <button type="submit" class="btn">
+                <i class="bi bi-check-lg"></i> Update
+            </button>
+            <a href="{% url 'issue_detail' issue.issue_id %}" class="btn-outline">Cancel</a>
+        </div>
+    </form>
+
+    <div class="section-divider mt-4">QA & Delivery (read-only — updates automatically)</div>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="detail-label">Completion Date</div>
+            <div class="detail-value">{{ issue.completion_date|default:"-" }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">QA Status</div>
+            <div class="detail-value">
+                <span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Delivery Status</div>
+            <div class="detail-value">
+                <span class="badge-status delivery-{{ issue.delivery_status.name|slugify_badge }}">{{ issue.delivery_status.name|default:"-" }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

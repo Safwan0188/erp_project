@@ -1,11 +1,16 @@
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import IssueForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm, QAMemberForm, DeveloperForm
-from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, QAMember, Notification
-
+from .forms import IssueForm, DeveloperIssueEditForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm, QAMemberForm
+from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, QAMember, Notification, IssueAssignmentHistory
+from accounts.utils import get_current_app_user
+from accounts import permissions as perms
 
 def issue_create(request):
+    current_user = get_current_app_user(request)
+    if not perms.can_view_create_issue_page(current_user):
+        return redirect('issue_list')
+
     if request.method == 'POST':
         form = IssueForm(request.POST, request.FILES)
         if form.is_valid():
@@ -17,6 +22,7 @@ def issue_create(request):
 
 
 def issue_list(request):
+    current_user = get_current_app_user(request)
     all_issues = Issue.objects.all().order_by('-issue_id')
 
     query           = request.GET.get('q', '')
@@ -71,6 +77,23 @@ def issue_list(request):
         delivery_status__name='Delivered'
     ).order_by('-issue_id')
 
+    # Developers get their own sub-lists based purely on Development
+    # Status (not mixed with QA Status like the general/admin view),
+    # since a Developer's worklist should reflect their own status only.
+    if current_user and current_user.role == 'developer':
+        dev = perms.get_linked_developer(current_user)
+        if dev:
+            dev_issues = all_issues.filter(assigned_to=dev)
+            pending_issues    = dev_issues.filter(status__name__in=['Open', 'On Hold'])
+            inprogress_issues = dev_issues.filter(status__name='In Progress')
+            completed_issues  = dev_issues.filter(status__name='Completed')
+            delivered_issues  = dev_issues.filter(delivery_status__name='Delivered').order_by('-issue_id')
+        else:
+            pending_issues    = pending_issues.none()
+            inprogress_issues = inprogress_issues.none()
+            completed_issues  = completed_issues.none()
+            delivered_issues  = delivered_issues.none()
+
     return render(request, 'issues/issue_list.html', {
         'issues'               : all_issues,
         'query'                : query,
@@ -95,6 +118,23 @@ def issue_list(request):
 
 def issue_edit(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
+    current_user = get_current_app_user(request)
+
+    if not perms.can_edit_issue(current_user, issue):
+        # Not allowed to edit this issue at all (e.g. a Developer viewing
+        # an issue not assigned to them) — send them to the read-only view.
+        return redirect('issue_detail', pk=pk)
+
+    if current_user.role == 'developer':
+        if request.method == 'POST':
+            form = DeveloperIssueEditForm(request.POST, instance=issue)
+            if form.is_valid():
+                form.save()
+                return redirect('issue_detail', pk=pk)
+        else:
+            form = DeveloperIssueEditForm(instance=issue)
+        return render(request, 'issues/issue_form_developer.html', {'form': form, 'issue': issue})
+
     if request.method == 'POST':
         form = IssueForm(request.POST, request.FILES, instance=issue)
         if form.is_valid():
@@ -107,6 +147,9 @@ def issue_edit(request, pk):
 
 def issue_delete(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
+    current_user = get_current_app_user(request)
+    if not perms.can_delete_issue(current_user):
+        return redirect('issue_detail', pk=pk)
     if request.method == 'POST':
         issue.delete()
         return redirect('issue_list')
@@ -115,7 +158,12 @@ def issue_delete(request, pk):
 
 def issue_detail(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
-    return render(request, 'issues/issue_detail.html', {'issue': issue})
+    current_user = get_current_app_user(request)
+    return render(request, 'issues/issue_detail.html', {
+        'issue'      : issue,
+        'can_edit'   : perms.can_edit_issue(current_user, issue),
+        'can_delete' : perms.can_delete_issue(current_user),
+    })
 
 
 def dashboard(request):
@@ -186,6 +234,9 @@ def dashboard(request):
 
 
 def settings_page(request):
+    current_user = get_current_app_user(request)
+    if not perms.can_view_settings_page(current_user):
+        return redirect('issue_list')
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
 
@@ -219,11 +270,6 @@ def settings_page(request):
             if form.is_valid():
                 form.save()
 
-        elif form_type == 'developer':
-            form = DeveloperForm(request.POST)
-            if form.is_valid():
-                form.save()
-
         elif form_type == 'category_time':
             category_id = request.POST.get('category_id')
             category    = get_object_or_404(Category, pk=category_id)
@@ -249,7 +295,11 @@ def settings_page(request):
 
             if model_name in model_map:
                 obj = get_object_or_404(model_map[model_name], pk=obj_id)
-                if not obj.is_default:
+                if model_name == 'developer' and obj.linked_user_id:
+                    # Role-driven Developer — must be managed by revoking
+                    # the Developer role in Accounts, not deleted here.
+                    pass
+                elif not obj.is_default:
                     obj.delete()
 
         return redirect('settings_page')
@@ -268,15 +318,32 @@ def settings_page(request):
         'qa_status_form'       : QAStatusForm(),
         'delivery_status_form' : DeliveryStatusForm(),
         'qa_member_form'       : QAMemberForm(),
-        'developer_form'       : DeveloperForm(),
     }
     return render(request, 'issues/settings.html', context)
 
 
 def notification_list(request):
+    current_user = get_current_app_user(request)
     notifications = Notification.objects.all().order_by('-created_at')
-    unread_count  = notifications.filter(is_read=False).count()
-    Notification.objects.filter(is_read=False).update(is_read=True)
+
+    if current_user and current_user.role == 'developer':
+        dev = perms.get_linked_developer(current_user)
+        if dev:
+            # Only notifications on issues currently assigned to this
+            # developer, and only from their current assignment window
+            # onward (not from before they were assigned).
+            active_windows = IssueAssignmentHistory.objects.filter(
+                developer=dev, unassigned_at__isnull=True
+            )
+            visible_q = Q(pk__in=[])
+            for window in active_windows:
+                visible_q |= Q(issue_id=window.issue_id, created_at__gte=window.assigned_at)
+            notifications = notifications.filter(visible_q) if active_windows else notifications.none()
+        else:
+            notifications = notifications.none()
+
+    unread_count = notifications.filter(is_read=False).count()
+    notifications.filter(is_read=False).update(is_read=True)
     return render(request, 'issues/notifications.html', {
         'notifications' : notifications,
         'unread_count'  : unread_count,
@@ -284,4 +351,20 @@ def notification_list(request):
 
 
 def get_unread_count(request):
-    return {'unread_count': Notification.objects.filter(is_read=False).count()}
+    current_user = get_current_app_user(request)
+    notifications = Notification.objects.filter(is_read=False)
+
+    if current_user and current_user.role == 'developer':
+        dev = perms.get_linked_developer(current_user)
+        if dev:
+            active_windows = IssueAssignmentHistory.objects.filter(
+                developer=dev, unassigned_at__isnull=True
+            )
+            visible_q = Q(pk__in=[])
+            for window in active_windows:
+                visible_q |= Q(issue_id=window.issue_id, created_at__gte=window.assigned_at)
+            notifications = notifications.filter(visible_q) if active_windows else notifications.none()
+        else:
+            notifications = notifications.none()
+
+    return {'unread_count': notifications.count()}

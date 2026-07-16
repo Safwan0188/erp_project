@@ -10,7 +10,7 @@ class IssueForm(forms.ModelForm):
         widgets = {
             'reported_date'      : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'approx_delivery'    : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'completion_date' : forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'readonly': 'readonly'}),
+            'completion_date'    : forms.DateInput(attrs={'type': 'date', 'class': 'form-control', 'readonly': 'readonly'}),
             'description'        : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'developer_comments' : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'qa_comments'        : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
@@ -34,6 +34,15 @@ class IssueForm(forms.ModelForm):
         today = datetime.date.today().isoformat()
         self.fields['reported_date'].widget.attrs['min'] = today
         self.fields['qa_by'].queryset = QAMember.objects.all()
+
+        # Only offer active developers, but keep the currently-assigned
+        # one selectable even if their role was since revoked, so an
+        # existing assignment doesn't silently break the form.
+        active_devs = Developer.objects.filter(is_active=True)
+        if self.instance and self.instance.pk and self.instance.assigned_to_id and not self.instance.assigned_to.is_active:
+            active_devs = active_devs | Developer.objects.filter(pk=self.instance.assigned_to_id)
+        self.fields['assigned_to'].queryset = active_devs.order_by('name')
+
         if not self.instance.pk:
             self.fields['reported_date'].initial               = datetime.date.today()
             self.fields['approx_delivery'].widget.attrs['min'] = today
@@ -76,6 +85,31 @@ class IssueForm(forms.ModelForm):
             self.add_error('delivery_status', 'Delivery Status is required when Development Status is Completed and QA Status is Approved.')
 
         return cleaned_data
+
+
+class DeveloperIssueEditForm(forms.ModelForm):
+    """
+    Restricted edit form for the Developer role — only the fields a
+    Developer may change on an issue assigned to them. Everything else
+    on the Issue stays whatever it already was. The model's signals
+    still run exactly as they do for any other save (e.g. Completed ->
+    QA Status auto-opens, Rejected -> Reopened, etc.) since that logic
+    lives on Issue itself, not in this form.
+    """
+    class Meta:
+        model = Issue
+        fields = ['allocated_time', 'approx_delivery', 'status', 'developer_comments']
+        widgets = {
+            'allocated_time'     : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 3 - 5 hrs or 10 - 12 days'}),
+            'approx_delivery'    : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'status'             : forms.Select(attrs={'class': 'form-select'}),
+            'developer_comments' : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.reported_date:
+            self.fields['approx_delivery'].widget.attrs['min'] = self.instance.reported_date.isoformat()
 
 
 class CategoryForm(forms.ModelForm):
