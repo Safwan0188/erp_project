@@ -26,14 +26,13 @@ class IssueForm(forms.ModelForm):
             'qa_status'          : forms.Select(attrs={'class': 'form-select'}),
             'delivery_status'    : forms.Select(attrs={'class': 'form-select'}),
             'assigned_to'        : forms.Select(attrs={'class': 'form-select'}),
-            'qa_by'              : forms.CheckboxSelectMultiple(),
+            'qa_by'              : forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         today = datetime.date.today().isoformat()
         self.fields['reported_date'].widget.attrs['min'] = today
-        self.fields['qa_by'].queryset = QAMember.objects.all()
 
         # Only offer active developers, but keep the currently-assigned
         # one selectable even if their role was since revoked, so an

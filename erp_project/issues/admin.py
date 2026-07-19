@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import (
     Developer, IssueAssignmentHistory,
     Category, IssueType, Status, QAStatus, DeliveryStatus, QAMember,
+    QAAssignmentHistory,
 )
 
 
@@ -20,6 +21,16 @@ class IssueAssignmentHistoryAdmin(admin.ModelAdmin):
     list_display  = ('issue', 'developer', 'assigned_at', 'unassigned_at')
     list_filter   = ('developer',)
     readonly_fields = ('issue', 'developer', 'assigned_at', 'unassigned_at')
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(QAAssignmentHistory)
+class QAAssignmentHistoryAdmin(admin.ModelAdmin):
+    list_display  = ('issue', 'qa_member', 'assigned_at', 'unassigned_at')
+    list_filter   = ('qa_member',)
+    readonly_fields = ('issue', 'qa_member', 'assigned_at', 'unassigned_at')
 
     def has_add_permission(self, request):
         return False

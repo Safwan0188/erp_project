@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from .models import Issue, Notification, Status, QAStatus, DeliveryStatus, Developer, IssueAssignmentHistory
+from .models import Issue, Notification, Status, QAStatus, DeliveryStatus, Developer, IssueAssignmentHistory, QAAssignmentHistory
 from accounts.models import AppUser
 
 
@@ -35,6 +35,7 @@ def _compute_approx_delivery(allocated_time_str):
 def track_issue_changes(sender, instance, **kwargs):
     if not instance.pk:
         instance._old_assigned_to        = None
+        instance._old_qa_by              = None
         instance._old_status             = None
         instance._old_qa_status          = None
         instance._old_delivery_status    = None
@@ -45,6 +46,7 @@ def track_issue_changes(sender, instance, **kwargs):
     try:
         old = Issue.objects.get(pk=instance.pk)
         instance._old_assigned_to        = old.assigned_to
+        instance._old_qa_by              = old.qa_by
         instance._old_status             = old.status
         instance._old_qa_status          = old.qa_status
         instance._old_delivery_status    = old.delivery_status
@@ -52,6 +54,7 @@ def track_issue_changes(sender, instance, **kwargs):
         instance._old_qa_comments        = old.qa_comments
     except Issue.DoesNotExist:
         instance._old_assigned_to        = None
+        instance._old_qa_by              = None
         instance._old_status             = None
         instance._old_qa_status          = None
         instance._old_delivery_status    = None
@@ -285,7 +288,39 @@ def track_assignment_history(sender, instance, created, **kwargs):
         IssueAssignmentHistory.objects.create(issue=instance, developer=new_assigned)
 
 
+@receiver(post_save, sender=Issue)
+def track_qa_assignment_history(sender, instance, created, **kwargs):
+    """
+    Maintains QAAssignmentHistory so per-QA-member notification filtering
+    has a real "assigned since" timestamp to work with. Mirrors
+    track_assignment_history for developers. Runs on every save; only
+    acts when qa_by actually changed (or on creation with a QA member
+    already set).
+    """
+    old_qa_by = getattr(instance, '_old_qa_by', None)
+    new_qa_by = instance.qa_by
+
+    if created:
+        if new_qa_by:
+            QAAssignmentHistory.objects.create(issue=instance, qa_member=new_qa_by)
+        return
+
+    if new_qa_by == old_qa_by:
+        return
+
+    # Close out the previous QA member's open assignment window, if any.
+    if old_qa_by:
+        QAAssignmentHistory.objects.filter(
+            issue=instance, qa_member=old_qa_by, unassigned_at__isnull=True
+        ).update(unassigned_at=timezone.now())
+
+    # Open a new window for the newly assigned QA member.
+    if new_qa_by:
+        QAAssignmentHistory.objects.create(issue=instance, qa_member=new_qa_by)
+
+
 @receiver(post_save, sender=AppUser)
+
 def sync_developer_from_appuser(sender, instance, created, **kwargs):
     """
     Keeps the Developer lookup table in sync with users holding the

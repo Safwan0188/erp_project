@@ -162,10 +162,8 @@
                         <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
                         <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
                         <td>
-                            {% if issue.qa_by.all %}
-                                {% for member in issue.qa_by.all %}
-                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
-                                {% endfor %}
+                            {% if issue.qa_by %}
+                                <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ issue.qa_by.name }}</span>
                             {% else %}-{% endif %}
                         </td>
                         <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
@@ -247,10 +245,8 @@
                         <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
                         <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
                         <td>
-                            {% if issue.qa_by.all %}
-                                {% for member in issue.qa_by.all %}
-                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
-                                {% endfor %}
+                            {% if issue.qa_by %}
+                                <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ issue.qa_by.name }}</span>
                             {% else %}-{% endif %}
                         </td>
                         <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
@@ -332,10 +328,8 @@
                         <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
                         <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
                         <td>
-                            {% if issue.qa_by.all %}
-                                {% for member in issue.qa_by.all %}
-                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
-                                {% endfor %}
+                            {% if issue.qa_by %}
+                                <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ issue.qa_by.name }}</span>
                             {% else %}-{% endif %}
                         </td>
                         <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
@@ -417,10 +411,8 @@
                         <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
                         <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
                         <td>
-                            {% if issue.qa_by.all %}
-                                {% for member in issue.qa_by.all %}
-                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
-                                {% endfor %}
+                            {% if issue.qa_by %}
+                                <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ issue.qa_by.name }}</span>
                             {% else %}-{% endif %}
                         </td>
                         <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>
@@ -502,10 +494,8 @@
                         <td style="max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ issue.developer_comments|default:"-" }}</td>
                         <td style="white-space:nowrap;">{{ issue.completion_date|default:"-" }}</td>
                         <td>
-                            {% if issue.qa_by.all %}
-                                {% for member in issue.qa_by.all %}
-                                    <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ member.name }}</span>
-                                {% endfor %}
+                            {% if issue.qa_by %}
+                                <span style="display:inline-block; background:#deebff; color:#0052cc; border-radius:4px; padding:2px 8px; font-size:11px; margin:1px; white-space:nowrap;">{{ issue.qa_by.name }}</span>
                             {% else %}-{% endif %}
                         </td>
                         <td><span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span></td>

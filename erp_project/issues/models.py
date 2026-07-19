@@ -75,7 +75,7 @@ class Issue(models.Model):
     status               = models.ForeignKey(Status, on_delete=models.SET_NULL, null=True, blank=True)
     developer_comments   = models.TextField(blank=True, null=True)
     completion_date      = models.DateField(blank=True, null=True)
-    qa_by                = models.ManyToManyField('QAMember', blank=True, related_name='issues')
+    qa_by                = models.ForeignKey('QAMember', on_delete=models.SET_NULL, null=True, blank=True, related_name='issues')
     qa_status            = models.ForeignKey(QAStatus, on_delete=models.SET_NULL, null=True, blank=True)
     qa_comments          = models.TextField(blank=True, null=True)
     delivery_status      = models.ForeignKey(DeliveryStatus, on_delete=models.SET_NULL, null=True, blank=True)
@@ -103,6 +103,23 @@ class IssueAssignmentHistory(models.Model):
         status = "active" if not self.unassigned_at else "ended"
         return f"Issue #{self.issue_id} — {self.developer.name} ({status})"
 
+class QAAssignmentHistory(models.Model):
+    """
+    Tracks each assignment window of a QA member on an issue, mirroring
+    IssueAssignmentHistory for developers. Populated automatically via
+    signals whenever Issue.qa_by changes — never edited directly.
+    """
+    issue          = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='qa_assignment_history')
+    qa_member      = models.ForeignKey(QAMember, on_delete=models.CASCADE, related_name='assignment_history')
+    assigned_at    = models.DateTimeField(auto_now_add=True)
+    unassigned_at  = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-assigned_at']
+
+    def __str__(self):
+        status = "active" if not self.unassigned_at else "ended"
+        return f"Issue #{self.issue_id} — {self.qa_member.name} ({status})"
 
 class Notification(models.Model):
     TYPE_CHOICES = [
