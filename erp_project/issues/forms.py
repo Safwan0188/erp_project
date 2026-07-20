@@ -42,6 +42,12 @@ class IssueForm(forms.ModelForm):
             active_devs = active_devs | Developer.objects.filter(pk=self.instance.assigned_to_id)
         self.fields['assigned_to'].queryset = active_devs.order_by('name')
 
+        # Same active/keep-currently-assigned pattern as assigned_to above.
+        active_qa = QAMember.objects.filter(is_active=True)
+        if self.instance and self.instance.pk and self.instance.qa_by_id and not self.instance.qa_by.is_active:
+            active_qa = active_qa | QAMember.objects.filter(pk=self.instance.qa_by_id)
+        self.fields['qa_by'].queryset = active_qa.order_by('name')
+
         if not self.instance.pk:
             self.fields['reported_date'].initial               = datetime.date.today()
             self.fields['approx_delivery'].widget.attrs['min'] = today
@@ -109,6 +115,38 @@ class DeveloperIssueEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.reported_date:
             self.fields['approx_delivery'].widget.attrs['min'] = self.instance.reported_date.isoformat()
+
+
+class QAIssueEditForm(forms.ModelForm):
+    """
+    Restricted edit form for the QA role — only the fields a QA member
+    may change on an issue. qa_by works as a self-claim: while an issue
+    is unassigned, the dropdown offers only the current QA member's own
+    name (they can't hand an issue to someone else). Once qa_by is set,
+    it's locked (disabled) permanently — not even the assigned QA member
+    can change it afterward, matching the same "once assigned" lock the
+    Developer's assigned_to field already has implicitly. qa_status/
+    qa_comments stay editable throughout, same as any other role's saves.
+    """
+    class Meta:
+        model = Issue
+        fields = ['qa_by', 'qa_status', 'qa_comments']
+        widgets = {
+            'qa_by'       : forms.Select(attrs={'class': 'form-select'}),
+            'qa_status'   : forms.Select(attrs={'class': 'form-select'}),
+            'qa_comments' : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, qa_member=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.qa_member = qa_member
+
+        if self.instance and self.instance.pk and self.instance.qa_by_id:
+            # Already claimed — lock qa_by, whoever claimed it.
+            self.fields['qa_by'].disabled = True
+        elif qa_member is not None:
+            # Not yet claimed — the only valid choice is "assign it to me".
+            self.fields['qa_by'].queryset = QAMember.objects.filter(pk=qa_member.pk)
 
 
 class CategoryForm(forms.ModelForm):

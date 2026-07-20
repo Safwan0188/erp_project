@@ -1,8 +1,8 @@
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import IssueForm, DeveloperIssueEditForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm, QAMemberForm
-from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, QAMember, Notification, IssueAssignmentHistory
+from .forms import IssueForm, DeveloperIssueEditForm, QAIssueEditForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm
+from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, QAMember, Notification, IssueAssignmentHistory, QAAssignmentHistory
 from accounts.utils import get_current_app_user
 from accounts import permissions as perms
 
@@ -94,6 +94,27 @@ def issue_list(request):
             completed_issues  = completed_issues.none()
             delivered_issues  = delivered_issues.none()
 
+    # QA gets a hybrid: the Pending sub-list is a shared pool of every
+    # unclaimed issue (qa_by empty) still Open/On Hold, visible to every
+    # QA member, plus their own claimed issues that are still Open/On
+    # Hold. Once an issue is claimed (qa_by set), it moves into that QA
+    # member's personal sub-lists the same way Developer's do — driven
+    # purely by QA Status.
+    if current_user and current_user.role == 'qa':
+        qa = perms.get_linked_qamember(current_user)
+        if qa:
+            unclaimed = all_issues.filter(qa_by__isnull=True)
+            own       = all_issues.filter(qa_by=qa)
+            pending_issues    = (unclaimed | own).filter(qa_status__name__in=['Open', 'On Hold']).distinct()
+            inprogress_issues = own.filter(qa_status__name='In Progress')
+            completed_issues  = own.filter(qa_status__name__in=['Approved', 'Rejected'])
+            delivered_issues  = own.filter(delivery_status__name='Delivered').order_by('-issue_id')
+        else:
+            pending_issues    = pending_issues.none()
+            inprogress_issues = inprogress_issues.none()
+            completed_issues  = completed_issues.none()
+            delivered_issues  = delivered_issues.none()
+
     return render(request, 'issues/issue_list.html', {
         'issues'               : all_issues,
         'query'                : query,
@@ -134,6 +155,17 @@ def issue_edit(request, pk):
         else:
             form = DeveloperIssueEditForm(instance=issue)
         return render(request, 'issues/issue_form_developer.html', {'form': form, 'issue': issue})
+
+    if current_user.role == 'qa':
+        qa = perms.get_linked_qamember(current_user)
+        if request.method == 'POST':
+            form = QAIssueEditForm(request.POST, instance=issue, qa_member=qa)
+            if form.is_valid():
+                form.save()
+                return redirect('issue_detail', pk=pk)
+        else:
+            form = QAIssueEditForm(instance=issue, qa_member=qa)
+        return render(request, 'issues/issue_form_qa.html', {'form': form, 'issue': issue})
 
     if request.method == 'POST':
         form = IssueForm(request.POST, request.FILES, instance=issue)
@@ -265,11 +297,6 @@ def settings_page(request):
             if form.is_valid():
                 form.save()
 
-        elif form_type == 'qa_member':
-            form = QAMemberForm(request.POST)
-            if form.is_valid():
-                form.save()
-
         elif form_type == 'category_time':
             category_id = request.POST.get('category_id')
             category    = get_object_or_404(Category, pk=category_id)
@@ -299,6 +326,10 @@ def settings_page(request):
                     # Role-driven Developer — must be managed by revoking
                     # the Developer role in Accounts, not deleted here.
                     pass
+                elif model_name == 'qa_member' and obj.linked_user_id:
+                    # Role-driven QA member — must be managed by revoking
+                    # the QA role in Accounts, not deleted here.
+                    pass
                 elif not obj.is_default:
                     obj.delete()
 
@@ -317,7 +348,6 @@ def settings_page(request):
         'status_form'          : StatusForm(),
         'qa_status_form'       : QAStatusForm(),
         'delivery_status_form' : DeliveryStatusForm(),
-        'qa_member_form'       : QAMemberForm(),
     }
     return render(request, 'issues/settings.html', context)
 
@@ -334,6 +364,19 @@ def notification_list(request):
             # onward (not from before they were assigned).
             active_windows = IssueAssignmentHistory.objects.filter(
                 developer=dev, unassigned_at__isnull=True
+            )
+            visible_q = Q(pk__in=[])
+            for window in active_windows:
+                visible_q |= Q(issue_id=window.issue_id, created_at__gte=window.assigned_at)
+            notifications = notifications.filter(visible_q) if active_windows else notifications.none()
+        else:
+            notifications = notifications.none()
+
+    if current_user and current_user.role == 'qa':
+        qa = perms.get_linked_qamember(current_user)
+        if qa:
+            active_windows = QAAssignmentHistory.objects.filter(
+                qa_member=qa, unassigned_at__isnull=True
             )
             visible_q = Q(pk__in=[])
             for window in active_windows:
@@ -359,6 +402,19 @@ def get_unread_count(request):
         if dev:
             active_windows = IssueAssignmentHistory.objects.filter(
                 developer=dev, unassigned_at__isnull=True
+            )
+            visible_q = Q(pk__in=[])
+            for window in active_windows:
+                visible_q |= Q(issue_id=window.issue_id, created_at__gte=window.assigned_at)
+            notifications = notifications.filter(visible_q) if active_windows else notifications.none()
+        else:
+            notifications = notifications.none()
+
+    if current_user and current_user.role == 'qa':
+        qa = perms.get_linked_qamember(current_user)
+        if qa:
+            active_windows = QAAssignmentHistory.objects.filter(
+                qa_member=qa, unassigned_at__isnull=True
             )
             visible_q = Q(pk__in=[])
             for window in active_windows:

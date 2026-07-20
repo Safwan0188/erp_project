@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from .models import Issue, Notification, Status, QAStatus, DeliveryStatus, Developer, IssueAssignmentHistory, QAAssignmentHistory
+from .models import Issue, Notification, Status, QAStatus, DeliveryStatus, Developer, IssueAssignmentHistory, QAAssignmentHistory, QAMember
 from accounts.models import AppUser
 
 
@@ -388,3 +388,59 @@ def deactivate_developer_on_appuser_delete(sender, instance, **kwargs):
         dev.save()
     else:
         dev.delete()
+
+
+@receiver(post_save, sender=AppUser)
+def sync_qamember_from_appuser(sender, instance, created, **kwargs):
+    """
+    Keeps the QAMember lookup table in sync with users holding the QA
+    role. Mirrors sync_developer_from_appuser exactly — see that
+    function for the full rationale.
+    """
+    is_qa_now = instance.is_active and instance.role == 'qa'
+
+    try:
+        qa = QAMember.objects.get(linked_user=instance)
+    except QAMember.DoesNotExist:
+        qa = None
+
+    if is_qa_now:
+        if qa is None:
+            qa, _ = QAMember.objects.get_or_create(
+                linked_user=instance,
+                defaults={'name': instance.name, 'is_default': True, 'is_active': True}
+            )
+        else:
+            qa.name       = instance.name
+            qa.is_default = True
+            qa.is_active  = True
+            qa.save()
+    else:
+        if qa is not None:
+            has_assigned_issues = Issue.objects.filter(qa_by=qa).exists()
+            if has_assigned_issues:
+                qa.is_active  = False
+                qa.is_default = False
+                qa.save()
+            else:
+                qa.delete()
+
+
+@receiver(post_delete, sender=AppUser)
+def deactivate_qamember_on_appuser_delete(sender, instance, **kwargs):
+    """
+    QA equivalent of deactivate_developer_on_appuser_delete — see that
+    function for the full rationale.
+    """
+    try:
+        qa = QAMember.objects.get(name=instance.name, linked_user__isnull=True)
+    except (QAMember.DoesNotExist, QAMember.MultipleObjectsReturned):
+        return
+
+    has_assigned_issues = Issue.objects.filter(qa_by=qa).exists()
+    if has_assigned_issues:
+        qa.is_active  = False
+        qa.is_default = False
+        qa.save()
+    else:
+        qa.delete()

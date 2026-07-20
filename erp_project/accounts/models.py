@@ -20,6 +20,7 @@ class AppUser(models.Model):
     ROLE_CHOICES = [
         ('admin',     'Administrator'),
         ('developer', 'Developer'),
+        ('qa',        'QA'),
     ]
 
     name        = models.CharField(max_length=150)

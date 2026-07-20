@@ -199,19 +199,22 @@
     <div class="col-md-6">
         <div class="erp-card">
             <div class="section-divider">QA Members</div>
-            <form method="POST" class="d-flex gap-2 mb-3">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="qa_member">
-                {{ qa_member_form.name }}
-                <button type="submit" class="btn" style="white-space:nowrap;">
-                    <i class="bi bi-plus-lg"></i> Add
-                </button>
-            </form>
+            <div class="form-text text-muted mb-2">
+                This list is driven by the QA role in Accounts — grant or revoke
+                the role there to add or remove someone here.
+            </div>
             <ul class="list-group">
                 {% for item in qa_members %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ item.name }}</span>
-                    {% if not item.is_default %}
+                    <span>
+                        {{ item.name }}
+                        {% if not item.is_active %}
+                        <span class="badge-status" style="background:#eee; color:#5e6c84; margin-left:6px;">Inactive</span>
+                        {% endif %}
+                    </span>
+                    {% if item.linked_user_id or item.is_default %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Role-managed</span>
+                    {% else %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="delete">
@@ -221,8 +224,6 @@
                             <i class="bi bi-trash"></i>
                         </button>
                     </form>
-                    {% else %}
-                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
                     {% endif %}
                 </li>
                 {% empty %}

@@ -51,8 +51,10 @@ class Developer(models.Model):
         return self.name
 
 class QAMember(models.Model):
-    name       = models.CharField(max_length=100, unique=True)
-    is_default = models.BooleanField(default=False)
+    name         = models.CharField(max_length=100, unique=True)
+    is_default   = models.BooleanField(default=False)
+    linked_user  = models.OneToOneField('accounts.AppUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='qa_profile')
+    is_active    = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

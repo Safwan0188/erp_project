@@ -32,12 +32,12 @@
             <a href="{% url 'issue_list' %}" class="{% block nav_list %}{% endblock %}">
                 <i class="bi bi-card-list"></i> All Issues
             </a>
-            {% if current_role != 'developer' %}
+            {% if current_role != 'developer' and current_role != 'qa' %}
             <a href="{% url 'issue_create' %}" class="{% block nav_create %}{% endblock %}">
                 <i class="bi bi-plus-circle"></i> Create Issue
             </a>
             {% endif %}
-            {% if current_role != 'developer' %}
+            {% if current_role != 'developer' and current_role != 'qa' %}
             <div class="sidebar-label">Configuration</div>
             <a href="{% url 'settings_page' %}" class="{% block nav_settings %}{% endblock %}">
                 <i class="bi bi-gear"></i> Settings
