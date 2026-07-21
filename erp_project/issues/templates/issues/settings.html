@@ -24,7 +24,11 @@
                 {% for item in categories %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ item.name }}</span>
-                    {% if not item.is_default %}
+                    {% if item.is_default %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% elif is_ba and item.created_by_id != current_user_id %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Not yours</span>
+                    {% else %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="delete">
@@ -34,8 +38,6 @@
                             <i class="bi bi-trash"></i>
                         </button>
                     </form>
-                    {% else %}
-                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
                     {% endif %}
                 </li>
                 {% empty %}
@@ -61,7 +63,11 @@
                 {% for item in issue_types %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ item.name }}</span>
-                    {% if not item.is_default %}
+                    {% if item.is_default %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
+                    {% elif is_ba and item.created_by_id != current_user_id %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Not yours</span>
+                    {% else %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="delete">
@@ -71,8 +77,6 @@
                             <i class="bi bi-trash"></i>
                         </button>
                     </form>
-                    {% else %}
-                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">Default</span>
                     {% endif %}
                 </li>
                 {% empty %}
@@ -86,6 +90,7 @@
     <div class="col-md-6">
         <div class="erp-card">
             <div class="section-divider">Development Statuses</div>
+            {% if not is_ba %}
             <form method="POST" class="d-flex gap-2 mb-3">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="status">
@@ -94,11 +99,14 @@
                     <i class="bi bi-plus-lg"></i> Add
                 </button>
             </form>
+            {% endif %}
             <ul class="list-group">
                 {% for item in statuses %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ item.name }}</span>
-                    {% if not item.is_default %}
+                    {% if is_ba %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">View only</span>
+                    {% elif not item.is_default %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="delete">
@@ -123,6 +131,7 @@
     <div class="col-md-6">
         <div class="erp-card">
             <div class="section-divider">QA Statuses</div>
+            {% if not is_ba %}
             <form method="POST" class="d-flex gap-2 mb-3">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="qa_status">
@@ -131,11 +140,14 @@
                     <i class="bi bi-plus-lg"></i> Add
                 </button>
             </form>
+            {% endif %}
             <ul class="list-group">
                 {% for item in qa_statuses %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ item.name }}</span>
-                    {% if not item.is_default %}
+                    {% if is_ba %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">View only</span>
+                    {% elif not item.is_default %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="delete">
@@ -173,7 +185,9 @@
                         <span class="badge-status" style="background:#eee; color:#5e6c84; margin-left:6px;">Inactive</span>
                         {% endif %}
                     </span>
-                    {% if item.linked_user_id or item.is_default %}
+                    {% if is_ba %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">View only</span>
+                    {% elif item.linked_user_id or item.is_default %}
                     <span style="font-size:11px; color:#5e6c84; font-style:italic;">Role-managed</span>
                     {% else %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
@@ -212,7 +226,9 @@
                         <span class="badge-status" style="background:#eee; color:#5e6c84; margin-left:6px;">Inactive</span>
                         {% endif %}
                     </span>
-                    {% if item.linked_user_id or item.is_default %}
+                    {% if is_ba %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">View only</span>
+                    {% elif item.linked_user_id or item.is_default %}
                     <span style="font-size:11px; color:#5e6c84; font-style:italic;">Role-managed</span>
                     {% else %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
@@ -233,10 +249,11 @@
         </div>
     </div>
 
-     <!-- DELIVERY STATUS -->
+    <!-- DELIVERY STATUS -->
     <div class="col-md-6">
         <div class="erp-card">
             <div class="section-divider">Delivery Statuses</div>
+            {% if not is_ba %}
             <form method="POST" class="d-flex gap-2 mb-3">
                 {% csrf_token %}
                 <input type="hidden" name="form_type" value="delivery_status">
@@ -245,11 +262,14 @@
                     <i class="bi bi-plus-lg"></i> Add
                 </button>
             </form>
+            {% endif %}
             <ul class="list-group">
                 {% for item in delivery_statuses %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ item.name }}</span>
-                    {% if not item.is_default %}
+                    {% if is_ba %}
+                    <span style="font-size:11px; color:#5e6c84; font-style:italic;">View only</span>
+                    {% elif not item.is_default %}
                     <form method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete \'{{ item.name }}\'? This cannot be undone.');">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="delete">

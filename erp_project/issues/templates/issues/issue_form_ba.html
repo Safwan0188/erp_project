@@ -1,0 +1,118 @@
+{% extends "issues/base.html" %}
+{% load issue_extras %}
+{% block nav_create %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4>
+        <i class="bi bi-{% if edit %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+        {% if edit %}Edit Issue #{{ issue.issue_id }}{% else %}Create New Issue{% endif %}
+    </h4>
+    <a href="{% url 'issue_list' %}" class="btn-outline">
+        <i class="bi bi-arrow-left"></i> Back to Issues
+    </a>
+</div>
+
+<div class="erp-card">
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger mb-4">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                {% for field in form %}
+                {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="section-divider">Basic Information</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Project</label>
+                {{ form.project }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                {{ form.category }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Type</label>
+                {{ form.type }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Module</label>
+                {{ form.module }}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Task Name</label>
+                {{ form.task_name }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Attachments</label>
+                {{ form.attachments }}
+                {% if form.instance.attachments %}
+                <div class="mt-2" style="font-size:13px; color:#5e6c84;">
+                    Current file:
+                    <a href="{{ form.instance.attachments.url }}" target="_blank">
+                        {{ form.instance.attachments.name }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-divider">Reporting Details</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">Reported By</label>
+                <input type="text" class="form-control" value="{{ reported_by }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Reported Date</label>
+                <input type="text" class="form-control" value="{% if edit %}{{ issue.reported_date|date:'Y-m-d' }}{% endif %}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Assigned To</label>
+                {{ form.assigned_to }}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2">
+            <button type="submit" class="btn">
+                <i class="bi bi-check-lg"></i> {% if edit %}Update Issue{% else %}Save Issue{% endif %}
+            </button>
+            <a href="{% url 'issue_list' %}" class="btn-outline">Cancel</a>
+        </div>
+
+    </form>
+
+    {% if edit %}
+    <div class="section-divider mt-4">Status (read-only — updates automatically)</div>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="detail-label">Development Status</div>
+            <div class="detail-value">
+                <span class="badge-status status-{{ issue.status.name|slugify_badge }}">{{ issue.status.name|default:"-" }}</span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">QA Status</div>
+            <div class="detail-value">
+                <span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

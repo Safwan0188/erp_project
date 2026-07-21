@@ -4,6 +4,7 @@ from django.db import models
 class Category(models.Model):
     name       = models.CharField(max_length=100, unique=True)
     is_default = models.BooleanField(default=False)
+    created_by = models.ForeignKey('accounts.AppUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     def __str__(self):
         return self.name
@@ -12,6 +13,7 @@ class Category(models.Model):
 class IssueType(models.Model):
     name       = models.CharField(max_length=100, unique=True)
     is_default = models.BooleanField(default=False)
+    created_by = models.ForeignKey('accounts.AppUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
     def __str__(self):
         return self.name
@@ -69,7 +71,7 @@ class Issue(models.Model):
     task_name            = models.CharField(max_length=300)
     description          = models.TextField(blank=True, null=True)
     attachments          = models.FileField(upload_to='attachments/', blank=True, null=True)
-    reported_by          = models.CharField(max_length=100)
+    created_by           = models.ForeignKey('accounts.AppUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='reported_issues')
     reported_date        = models.DateField()
     assigned_to          = models.ForeignKey(Developer, on_delete=models.SET_NULL, null=True, blank=True)
     allocated_time       = models.CharField(max_length=100, blank=True, null=True)

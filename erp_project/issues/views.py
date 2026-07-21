@@ -1,7 +1,7 @@
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import IssueForm, DeveloperIssueEditForm, QAIssueEditForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm
+from .forms import IssueForm, DeveloperIssueEditForm, QAIssueEditForm, BAIssueForm, CategoryForm, IssueTypeForm, StatusForm, QAStatusForm, DeliveryStatusForm
 from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus, Developer, QAMember, Notification, IssueAssignmentHistory, QAAssignmentHistory
 from accounts.utils import get_current_app_user
 from accounts import permissions as perms
@@ -11,14 +11,29 @@ def issue_create(request):
     if not perms.can_view_create_issue_page(current_user):
         return redirect('issue_list')
 
+    if current_user.role == perms.BA_ROLE:
+        if request.method == 'POST':
+            form = BAIssueForm(request.POST, request.FILES)
+            if form.is_valid():
+                issue = form.save(commit=False)
+                issue.created_by = current_user
+                issue.reported_date = timezone.now().date()
+                issue.save()
+                return redirect('issue_list')
+        else:
+            form = BAIssueForm()
+        return render(request, 'issues/issue_form_ba.html', {'form': form, 'reported_by': current_user.name})
+
     if request.method == 'POST':
         form = IssueForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            issue = form.save(commit=False)
+            issue.created_by = current_user
+            issue.save()
             return redirect('issue_list')
     else:
         form = IssueForm()
-    return render(request, 'issues/issue_form.html', {'form': form})
+    return render(request, 'issues/issue_form.html', {'form': form, 'reported_by': current_user.name})
 
 
 def issue_list(request):
@@ -40,7 +55,7 @@ def issue_list(request):
             Q(project__icontains=query)           |
             Q(module__icontains=query)            |
             Q(task_name__icontains=query)         |
-            Q(reported_by__icontains=query)       |
+            Q(created_by__name__icontains=query)  |       
             Q(assigned_to__name__icontains=query)
         )
     if status:
@@ -115,6 +130,28 @@ def issue_list(request):
             completed_issues  = completed_issues.none()
             delivered_issues  = delivered_issues.none()
 
+    # Business Analyst sees the full "All Issues" list unfiltered, but
+    # sub-lists only cover issues they personally created — using the
+    # same mixed Dev Status + QA Status logic as the general/admin view
+    # above, just scoped down to their own issues.
+    if current_user and current_user.role == perms.BA_ROLE:
+        own_issues = all_issues.filter(created_by=current_user)
+        pending_issues = own_issues.filter(
+            Q(status__name__in=['Open', 'On Hold']) |
+            Q(qa_status__name__in=['Open', 'On Hold'])
+        ).distinct()
+        inprogress_issues = own_issues.filter(
+            Q(status__name='In Progress') |
+            Q(qa_status__name='In Progress')
+        ).distinct()
+        completed_issues = own_issues.filter(
+            Q(status__name='Completed') |
+            Q(qa_status__name__in=['Approved', 'Rejected'])
+        ).distinct()
+        delivered_issues = own_issues.filter(
+            delivery_status__name='Delivered'
+        ).order_by('-issue_id')
+
     return render(request, 'issues/issue_list.html', {
         'issues'               : all_issues,
         'query'                : query,
@@ -167,6 +204,16 @@ def issue_edit(request, pk):
             form = QAIssueEditForm(instance=issue, qa_member=qa)
         return render(request, 'issues/issue_form_qa.html', {'form': form, 'issue': issue})
 
+    if current_user.role == perms.BA_ROLE:
+        if request.method == 'POST':
+            form = BAIssueForm(request.POST, request.FILES, instance=issue)
+            if form.is_valid():
+                form.save()
+                return redirect('issue_detail', pk=pk)
+        else:
+            form = BAIssueForm(instance=issue)
+        return render(request, 'issues/issue_form_ba.html', {'form': form, 'issue': issue, 'edit': True, 'reported_by': issue.created_by.name if issue.created_by else ''})
+
     if request.method == 'POST':
         form = IssueForm(request.POST, request.FILES, instance=issue)
         if form.is_valid():
@@ -180,7 +227,7 @@ def issue_edit(request, pk):
 def issue_delete(request, pk):
     issue = get_object_or_404(Issue, pk=pk)
     current_user = get_current_app_user(request)
-    if not perms.can_delete_issue(current_user):
+    if not perms.can_delete_issue(current_user, issue):
         return redirect('issue_detail', pk=pk)
     if request.method == 'POST':
         issue.delete()
@@ -194,7 +241,7 @@ def issue_detail(request, pk):
     return render(request, 'issues/issue_detail.html', {
         'issue'      : issue,
         'can_edit'   : perms.can_edit_issue(current_user, issue),
-        'can_delete' : perms.can_delete_issue(current_user),
+        'can_delete' : perms.can_delete_issue(current_user, issue),
     })
 
 
@@ -269,18 +316,33 @@ def settings_page(request):
     current_user = get_current_app_user(request)
     if not perms.can_view_settings_page(current_user):
         return redirect('issue_list')
+
+    is_ba = current_user.role == perms.BA_ROLE
+    # A Business Analyst is only allowed to touch Category/Issue Type
+    # create+delete - everything else on this page is read-only to them.
+    ba_allowed_form_types = ('category', 'issue_type', 'delete')
+
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
+
+        if is_ba and form_type not in ba_allowed_form_types:
+            return redirect('settings_page')
 
         if form_type == 'category':
             form = CategoryForm(request.POST)
             if form.is_valid():
-                form.save()
+                obj = form.save(commit=False)
+                if is_ba:
+                    obj.created_by = current_user
+                obj.save()
 
         elif form_type == 'issue_type':
             form = IssueTypeForm(request.POST)
             if form.is_valid():
-                form.save()
+                obj = form.save(commit=False)
+                if is_ba:
+                    obj.created_by = current_user
+                obj.save()
 
         elif form_type == 'status':
             form = StatusForm(request.POST)
@@ -330,6 +392,9 @@ def settings_page(request):
                     # Role-driven QA member — must be managed by revoking
                     # the QA role in Accounts, not deleted here.
                     pass
+                elif is_ba:
+                    if perms.can_manage_option(current_user, obj=obj, model_name=model_name) and not obj.is_default:
+                        obj.delete()
                 elif not obj.is_default:
                     obj.delete()
 
@@ -348,6 +413,8 @@ def settings_page(request):
         'status_form'          : StatusForm(),
         'qa_status_form'       : QAStatusForm(),
         'delivery_status_form' : DeliveryStatusForm(),
+        'is_ba'                : is_ba,
+        'current_user_id'      : current_user.id,
     }
     return render(request, 'issues/settings.html', context)
 
@@ -384,6 +451,9 @@ def notification_list(request):
             notifications = notifications.filter(visible_q) if active_windows else notifications.none()
         else:
             notifications = notifications.none()
+
+    if current_user and current_user.role == perms.BA_ROLE:
+        notifications = notifications.filter(issue__created_by=current_user)
 
     unread_count = notifications.filter(is_read=False).count()
     notifications.filter(is_read=False).update(is_read=True)
@@ -422,5 +492,8 @@ def get_unread_count(request):
             notifications = notifications.filter(visible_q) if active_windows else notifications.none()
         else:
             notifications = notifications.none()
+
+    if current_user and current_user.role == perms.BA_ROLE:
+        notifications = notifications.filter(issue__created_by=current_user)
 
     return {'unread_count': notifications.count()}

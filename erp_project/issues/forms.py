@@ -6,7 +6,10 @@ from .models import Issue, Category, IssueType, Status, QAStatus, DeliveryStatus
 class IssueForm(forms.ModelForm):
     class Meta:
         model = Issue
-        fields = '__all__'
+        # created_by is deliberately excluded - it's set server-side from
+        # the logged-in AppUser (see issue_create in views.py), never
+        # typed or edited by anyone, admin included.
+        exclude = ['created_by']
         widgets = {
             'reported_date'      : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'approx_delivery'    : forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -18,7 +21,6 @@ class IssueForm(forms.ModelForm):
             'module'             : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Authentication'}),
             'task_name'          : forms.TextInput(attrs={'class': 'form-control', 'style': 'max-width:400px;'}),
             'attachments'        : forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple': False}),
-            'reported_by'        : forms.TextInput(attrs={'class': 'form-control'}),
             'allocated_time'     : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 3 - 5 hrs or 10 - 12 days'}),
             'category'           : forms.Select(attrs={'class': 'form-select'}),
             'type'               : forms.Select(attrs={'class': 'form-select'}),
@@ -148,6 +150,42 @@ class QAIssueEditForm(forms.ModelForm):
             # Not yet claimed — the only valid choice is "assign it to me".
             self.fields['qa_by'].queryset = QAMember.objects.filter(pk=qa_member.pk)
 
+class BAIssueForm(forms.ModelForm):
+    """
+    Restricted form for the Business Analyst role — used for both
+    creating a new issue and (until it locks) editing one of their own.
+    Only the fields a BA is allowed to touch; every other Issue field
+    keeps whatever value it already has (blank on creation).
+
+    assigned_to is included and optional — a BA may pick a Developer
+    right away or leave it blank for an admin/dev to assign later.
+
+    "Reported By" is deliberately NOT in this form - it's just a display
+    of created_by, which is set server-side from the logged-in AppUser
+    (see issue_create/issue_edit in views.py), never typed or edited.
+    """
+    class Meta:
+        model = Issue
+        fields = ['project', 'category', 'type', 'module', 'task_name', 'description', 'attachments', 'assigned_to']
+        widgets = {
+            'project'     : forms.TextInput(attrs={'class': 'form-control'}),
+            'category'    : forms.Select(attrs={'class': 'form-select'}),
+            'type'        : forms.Select(attrs={'class': 'form-select'}),
+            'module'      : forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Authentication'}),
+            'task_name'   : forms.TextInput(attrs={'class': 'form-control'}),
+            'description' : forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'attachments' : forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple': False}),
+            'assigned_to' : forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['assigned_to'].required = False
+        # Same active/keep-currently-assigned pattern as the admin IssueForm.
+        active_devs = Developer.objects.filter(is_active=True)
+        if self.instance and self.instance.pk and self.instance.assigned_to_id and not self.instance.assigned_to.is_active:
+            active_devs = active_devs | Developer.objects.filter(pk=self.instance.assigned_to_id)
+        self.fields['assigned_to'].queryset = active_devs.order_by('name')
 
 class CategoryForm(forms.ModelForm):
     class Meta:

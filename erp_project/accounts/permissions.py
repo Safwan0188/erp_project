@@ -11,6 +11,7 @@ don't need to be touched again.
 ADMIN_ROLE     = 'admin'
 DEVELOPER_ROLE = 'developer'
 QA_ROLE        = 'qa'
+BA_ROLE        = 'business_analyst'
 
 
 def has_permission(app_user, action=None):
@@ -71,14 +72,25 @@ def get_linked_qamember(app_user):
         return None
 
 
+def is_ba_locked(issue):
+    """
+    A Business Analyst loses edit/delete access to their own issue once
+    its Development Status has moved to 'In Progress' — from that point
+    on the issue is out of their hands and stays permanently locked to
+    them, even if the status later changes again.
+    """
+    return issue.status_id is not None and issue.status.name == 'In Progress'
+
+
 def can_edit_issue(app_user, issue):
     """
     Whether app_user can open the edit form for this issue at all.
     Admin: always. Developer: only if the issue is currently assigned
     to their linked Developer record. QA: if the issue is still
     unclaimed (qa_by empty — they can open it to self-claim), or if
-    it's already claimed by their own linked QAMember record. Anyone
-    else: no.
+    it's already claimed by their own linked QAMember record. Business
+    Analyst: only on issues they personally created, and only until Dev
+    Status reaches In Progress. Anyone else: no.
     """
     if app_user is None or not app_user.is_active:
         return False
@@ -92,12 +104,25 @@ def can_edit_issue(app_user, issue):
         if qa is None:
             return False
         return issue.qa_by_id is None or issue.qa_by_id == qa.id
+    if app_user.role == BA_ROLE:
+        return issue.created_by_id == app_user.id and not is_ba_locked(issue)
     return False
 
 
-def can_delete_issue(app_user):
-    """Only Admin can delete issues."""
-    return app_user is not None and app_user.is_active and app_user.role == ADMIN_ROLE
+def can_delete_issue(app_user, issue=None):
+    """
+    Admin can always delete. A Business Analyst can delete an issue
+    they personally created, under the same lock rule as editing (only
+    before Dev Status reaches In Progress). `issue` is optional so
+    existing admin-only call sites that don't have one keep working.
+    """
+    if app_user is None or not app_user.is_active:
+        return False
+    if app_user.role == ADMIN_ROLE:
+        return True
+    if app_user.role == BA_ROLE and issue is not None:
+        return issue.created_by_id == app_user.id and not is_ba_locked(issue)
+    return False
 
 
 # Fields a Developer may change on an issue assigned to them. Everything
@@ -108,3 +133,29 @@ DEVELOPER_EDITABLE_FIELDS = ['allocated_time', 'approx_delivery', 'status', 'dev
 # an unassigned issue, but the form layer locks it once it's set — see
 # QAIssueEditForm.
 QA_EDITABLE_FIELDS = ['qa_by', 'qa_status', 'qa_comments']
+
+# Fields a Business Analyst may set on creation and change afterward
+# (until the issue locks). created_by (shown as "Reported By") is NOT
+# here — it's forced from the logged-in user server-side, never
+# something the BA (or anyone else) edits directly.
+BA_EDITABLE_FIELDS = ['project', 'category', 'type', 'module', 'task_name', 'description', 'attachments', 'assigned_to']
+
+def can_manage_option(app_user, obj=None, model_name=None):
+    """
+    Whether app_user can create/delete Category or Issue Type entries
+    in Settings. Admin: any option type, any entry. Business Analyst:
+    only Category and Issue Type (the option-lists behind their
+    restricted Create Issue form), and only entries they personally
+    created — `obj` is the specific Category/IssueType instance being
+    deleted (omit `obj` when just checking create access, e.g. for
+    model_name='category'/'issue_type').
+    """
+    if app_user is None or not app_user.is_active:
+        return False
+    if app_user.role == ADMIN_ROLE:
+        return True
+    if app_user.role == BA_ROLE and model_name in ('category', 'issue_type'):
+        if obj is None:
+            return True
+        return obj.created_by_id == app_user.id
+    return False
