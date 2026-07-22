@@ -153,7 +153,7 @@
                             </a>
                             {% else %}-{% endif %}
                         </td>
-                        <td>{{ issue.reported_by }}</td>
+                        <td>{{ issue.created_by.name }}</td>
                         <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
                         <td>{{ issue.assigned_to.name|default:"-" }}</td>
                         <td>{{ issue.allocated_time }}</td>
@@ -236,7 +236,7 @@
                             </a>
                             {% else %}-{% endif %}
                         </td>
-                        <td>{{ issue.reported_by }}</td>
+                        <td>{{ issue.created_by.name }}</td>
                         <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
                         <td>{{ issue.assigned_to.name|default:"-" }}</td>
                         <td>{{ issue.allocated_time }}</td>
@@ -319,7 +319,7 @@
                             </a>
                             {% else %}-{% endif %}
                         </td>
-                        <td>{{ issue.reported_by }}</td>
+                        <td>{{ issue.created_by.name }}</td>
                         <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
                         <td>{{ issue.assigned_to.name|default:"-" }}</td>
                         <td>{{ issue.allocated_time }}</td>
@@ -402,7 +402,7 @@
                             </a>
                             {% else %}-{% endif %}
                         </td>
-                        <td>{{ issue.reported_by }}</td>
+                        <td>{{ issue.created_by.name }}</td>
                         <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
                         <td>{{ issue.assigned_to.name|default:"-" }}</td>
                         <td>{{ issue.allocated_time }}</td>
@@ -485,7 +485,7 @@
                             </a>
                             {% else %}-{% endif %}
                         </td>
-                        <td>{{ issue.reported_by }}</td>
+                        <td>{{ issue.created_by.name }}</td>
                         <td style="white-space:nowrap;">{{ issue.reported_date }}</td>
                         <td>{{ issue.assigned_to.name|default:"-" }}</td>
                         <td>{{ issue.allocated_time }}</td>

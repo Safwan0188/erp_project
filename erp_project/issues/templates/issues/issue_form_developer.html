@@ -58,7 +58,7 @@
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="detail-label">Reported By</div>
-            <div class="detail-value">{{ issue.reported_by }}</div>
+            <div class="detail-value">{{ issue.created_by.name }}</div>
         </div>
         <div class="col-md-4">
             <div class="detail-label">Reported Date</div>
@@ -115,11 +115,11 @@
         </div>
     </form>
 
-    <div class="section-divider mt-4">QA & Delivery (read-only — updates automatically)</div>
-    <div class="row g-3">
+    <div class="section-divider mt-4">QA Details (read-only — updates automatically)</div>
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="detail-label">Completion Date</div>
-            <div class="detail-value">{{ issue.completion_date|default:"-" }}</div>
+            <div class="detail-label">QA By</div>
+            <div class="detail-value">{{ issue.qa_by.name|default:"-" }}</div>
         </div>
         <div class="col-md-4">
             <div class="detail-label">QA Status</div>
@@ -127,6 +127,18 @@
                 <span class="badge-status qa-{{ issue.qa_status.name|slugify_badge }}">{{ issue.qa_status.name|default:"-" }}</span>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="detail-label">Completion Date</div>
+            <div class="detail-value">{{ issue.completion_date|default:"-" }}</div>
+        </div>
+        <div class="col-12">
+            <div class="detail-label">QA Comments</div>
+            <div class="detail-value">{{ issue.qa_comments|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider mt-4">Delivery (read-only — updates automatically)</div>
+    <div class="row g-3">
         <div class="col-md-4">
             <div class="detail-label">Delivery Status</div>
             <div class="detail-value">

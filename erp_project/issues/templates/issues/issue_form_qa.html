@@ -54,11 +54,31 @@
         {% endif %}
     </div>
 
-    <div class="section-divider">Development Details (read-only)</div>
+    <div class="section-divider">Reporting Details (read-only)</div>
     <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="detail-label">Reported By</div>
+            <div class="detail-value">{{ issue.created_by.name }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Reported Date</div>
+            <div class="detail-value">{{ issue.reported_date }}</div>
+        </div>
         <div class="col-md-4">
             <div class="detail-label">Assigned To</div>
             <div class="detail-value">{{ issue.assigned_to.name|default:"-" }}</div>
+        </div>
+    </div>
+
+    <div class="section-divider">Development Details (read-only)</div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="detail-label">Allocated Time</div>
+            <div class="detail-value">{{ issue.allocated_time|default:"-" }}</div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-label">Approx. Delivery Date</div>
+            <div class="detail-value">{{ issue.approx_delivery|default:"-" }}</div>
         </div>
         <div class="col-md-4">
             <div class="detail-label">Development Status</div>
