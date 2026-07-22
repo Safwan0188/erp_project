@@ -22,6 +22,7 @@ class AppUser(models.Model):
         ('developer', 'Developer'),
         ('qa',        'QA'),
         ('business_analyst',  'Business Analyst'),
+        ('management', 'Management'),
     ]
 
     name        = models.CharField(max_length=150)

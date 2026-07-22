@@ -12,6 +12,7 @@ ADMIN_ROLE     = 'admin'
 DEVELOPER_ROLE = 'developer'
 QA_ROLE        = 'qa'
 BA_ROLE        = 'business_analyst'
+MANAGEMENT_ROLE = 'management'
 
 
 def has_permission(app_user, action=None):
@@ -31,17 +32,17 @@ def has_permission(app_user, action=None):
 
 
 def can_view_create_issue_page(app_user):
-    """Developers and QA cannot see or use the Create Issue page."""
+    """Developers, QA, and Management (read-only) cannot see or use the Create Issue page."""
     if app_user is None or not app_user.is_active:
         return False
-    return app_user.role not in (DEVELOPER_ROLE, QA_ROLE)
+    return app_user.role not in (DEVELOPER_ROLE, QA_ROLE, MANAGEMENT_ROLE)
 
 
 def can_view_settings_page(app_user):
-    """Developers and QA cannot see or use the Settings page."""
+    """Developers, QA, and Management (read-only) cannot see or use the Settings page."""
     if app_user is None or not app_user.is_active:
         return False
-    return app_user.role not in (DEVELOPER_ROLE, QA_ROLE)
+    return app_user.role not in (DEVELOPER_ROLE, QA_ROLE, MANAGEMENT_ROLE)
 
 
 def get_linked_developer(app_user):
@@ -159,3 +160,7 @@ def can_manage_option(app_user, obj=None, model_name=None):
             return True
         return obj.created_by_id == app_user.id
     return False
+
+
+
+
