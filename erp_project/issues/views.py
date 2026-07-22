@@ -92,6 +92,15 @@ def issue_list(request):
         delivery_status__name='Delivered'
     ).order_by('-issue_id')
 
+    # Users with no role assigned see the full "All Issues" list and the
+    # Dashboard, but every sub-list stays empty until an Admin gives them
+    # a role — nothing else should surface for them here.
+    if current_user and not current_user.role:
+        pending_issues    = pending_issues.none()
+        inprogress_issues = inprogress_issues.none()
+        completed_issues  = completed_issues.none()
+        delivered_issues  = delivered_issues.none()
+
     # Developers get their own sub-lists based purely on Development
     # Status (not mixed with QA Status like the general/admin view),
     # since a Developer's worklist should reflect their own status only.

@@ -1,0 +1,62 @@
+{% extends "issues/base.html" %}
+{% block nav_users %}active{% endblock %}
+
+{% block content %}
+<div class="topbar">
+    <h4><i class="bi bi-people me-2"></i>User Management</h4>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} py-2 small">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="erp-card">
+    <div class="section-divider">Users</div>
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Current Role</th>
+                <th>Active</th>
+                <th style="width: 320px;">Change Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in app_users %}
+            <tr>
+                <td>{{ user.name }}</td>
+                <td>
+                    {% if user.role %}
+                        {{ user.get_role_display }}
+                    {% else %}
+                        <span style="font-size:11px; color:#5e6c84; font-style:italic;">No role assigned</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="app_user_id" value="{{ user.id }}">
+                        <select name="role" class="form-select form-select-sm">
+                            <option value="">— No Role —</option>
+                            {% for value, label in role_choices %}
+                            <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

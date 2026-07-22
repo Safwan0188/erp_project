@@ -31,16 +31,23 @@ def has_permission(app_user, action=None):
     return False
 
 
-def can_view_create_issue_page(app_user):
-    """Developers, QA, and Management (read-only) cannot see or use the Create Issue page."""
+def can_manage_users(app_user):
+    """Only Admin can view/change other users' roles."""
     if app_user is None or not app_user.is_active:
+        return False
+    return app_user.role == ADMIN_ROLE
+
+
+def can_view_create_issue_page(app_user):
+    """Developers, QA, Management (read-only), and users with no role cannot see or use the Create Issue page."""
+    if app_user is None or not app_user.is_active or not app_user.role:
         return False
     return app_user.role not in (DEVELOPER_ROLE, QA_ROLE, MANAGEMENT_ROLE)
 
 
 def can_view_settings_page(app_user):
-    """Developers, QA, and Management (read-only) cannot see or use the Settings page."""
-    if app_user is None or not app_user.is_active:
+    """Developers, QA, Management (read-only), and users with no role cannot see or use the Settings page."""
+    if app_user is None or not app_user.is_active or not app_user.role:
         return False
     return app_user.role not in (DEVELOPER_ROLE, QA_ROLE, MANAGEMENT_ROLE)
 

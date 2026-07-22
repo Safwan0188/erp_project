@@ -26,7 +26,7 @@ class AppUser(models.Model):
     ]
 
     name        = models.CharField(max_length=150)
-    role        = models.CharField(max_length=30, choices=ROLE_CHOICES)
+    role        = models.CharField(max_length=30, choices=ROLE_CHOICES, blank=True, default='', help_text="Blank means the user currently has no role assigned.")
     external_id = models.CharField(max_length=255, blank=True, null=True, help_text="ID of this user on the external site, once that API integration exists.")
     is_active   = models.BooleanField(default=True)
     created_at  = models.DateTimeField(auto_now_add=True)

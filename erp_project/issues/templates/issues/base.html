@@ -23,24 +23,31 @@
             <a href="{% url 'dashboard' %}" class="{% block nav_dashboard %}{% endblock %}">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
+            {% if current_role %}
             <a href="{% url 'notification_list' %}" class="{% block nav_notifications %}{% endblock %}">
                 <i class="bi bi-bell"></i> Notifications
                 {% if unread_count > 0 %}
                 <span class="notif-badge">{{ unread_count }}</span>
                 {% endif %}
             </a>
+            {% endif %}
             <a href="{% url 'issue_list' %}" class="{% block nav_list %}{% endblock %}">
                 <i class="bi bi-card-list"></i> All Issues
             </a>
-            {% if current_role != 'developer' and current_role != 'qa' and current_role != 'management' %}
+            {% if current_role and current_role != 'developer' and current_role != 'qa' and current_role != 'management' %}
             <a href="{% url 'issue_create' %}" class="{% block nav_create %}{% endblock %}">
                 <i class="bi bi-plus-circle"></i> Create Issue
             </a>
             {% endif %}
-            {% if current_role != 'developer' and current_role != 'qa' and current_role != 'management' %}
+            {% if current_role and current_role != 'developer' and current_role != 'qa' and current_role != 'management' %}
             <div class="sidebar-label">Configuration</div>
             <a href="{% url 'settings_page' %}" class="{% block nav_settings %}{% endblock %}">
                 <i class="bi bi-gear"></i> Settings
+            </a>
+            {% endif %}
+            {% if current_role == 'admin' %}
+            <a href="{% url 'user_management' %}" class="{% block nav_users %}{% endblock %}">
+                <i class="bi bi-people"></i> User Management
             </a>
             {% endif %}
         </div>
