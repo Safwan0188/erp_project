@@ -118,6 +118,15 @@ class DeveloperIssueEditForm(forms.ModelForm):
         if self.instance and self.instance.reported_date:
             self.fields['approx_delivery'].widget.attrs['min'] = self.instance.reported_date.isoformat()
 
+    def clean(self):
+        cleaned_data = super().clean()
+        new_status = cleaned_data.get('status')
+        if self.instance and self.instance.pk and new_status:
+            old_status_name = self.instance.status.name if self.instance.status else None
+            if old_status_name == 'In Progress' and new_status.name == 'Open':
+                self.add_error('status', "This issue is already In Progress and can't be switched back to Open.")
+        return cleaned_data
+
 
 class QAIssueEditForm(forms.ModelForm):
     """
@@ -146,9 +155,27 @@ class QAIssueEditForm(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.qa_by_id:
             # Already claimed — lock qa_by, whoever claimed it.
             self.fields['qa_by'].disabled = True
+        elif self.instance and self.instance.pk and (not self.instance.status or self.instance.status.name != 'Completed'):
+            # Not yet claimed, and Dev hasn't marked it Completed — QA
+            # can't claim it, and can't touch QA Status either, until then.
+            self.fields['qa_by'].disabled = True
+            self.fields['qa_status'].disabled = True
         elif qa_member is not None:
-            # Not yet claimed — the only valid choice is "assign it to me".
+            # Not yet claimed, Dev Status is Completed — the only valid
+            # choice is "assign it to me".
             self.fields['qa_by'].queryset = QAMember.objects.filter(pk=qa_member.pk)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_qa_status = cleaned_data.get('qa_status')
+        if self.instance and self.instance.pk and new_qa_status:
+            old_qa_status_name = self.instance.qa_status.name if self.instance.qa_status else None
+            if old_qa_status_name == 'In Progress' and new_qa_status.name == 'Open':
+                self.add_error('qa_status', "This issue's QA Status is already In Progress and can't be switched back to Open.")
+            if (not self.instance.qa_by_id
+                    and (not self.instance.status or self.instance.status.name != 'Completed')):
+                self.add_error('qa_status', "QA Status can't be changed until the Developer marks this issue Completed.")
+        return cleaned_data
 
 class BAIssueForm(forms.ModelForm):
     """
