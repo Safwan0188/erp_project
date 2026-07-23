@@ -94,15 +94,19 @@
     </button>
     <button class="issue-tab" id="tab-btn-pending" onclick="switchTab('pending')">
         <i class="bi bi-hourglass-split"></i> Pending / On Hold
+        {% if pending_unread > 0 %}<span class="tab-notif-badge">{{ pending_unread }}</span>{% endif %}
     </button>
     <button class="issue-tab" id="tab-btn-inprogress" onclick="switchTab('inprogress')">
         <i class="bi bi-play-circle"></i> In Progress
+        {% if inprogress_unread > 0 %}<span class="tab-notif-badge">{{ inprogress_unread }}</span>{% endif %}
     </button>
     <button class="issue-tab" id="tab-btn-completed" onclick="switchTab('completed')">
         <i class="bi bi-check-circle"></i> Completed
+        {% if completed_unread > 0 %}<span class="tab-notif-badge">{{ completed_unread }}</span>{% endif %}
     </button>
     <button class="issue-tab" id="tab-btn-delivered" onclick="switchTab('delivered')">
         <i class="bi bi-truck"></i> Delivered
+        {% if delivered_unread > 0 %}<span class="tab-notif-badge">{{ delivered_unread }}</span>{% endif %}
     </button>
 </div>
 

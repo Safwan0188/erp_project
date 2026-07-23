@@ -899,3 +899,13 @@ body {
     background: #deebff;
     color: #0052cc;
 }
+
+.tab-notif-badge {
+    background: #bf2600;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    line-height: 1.4;
+}
